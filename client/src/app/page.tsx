@@ -112,7 +112,7 @@ export default function Dashboard() {
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20">
                   Admin
                 </span>
-                <button 
+                <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 px-4 py-2 rounded-lg"
                 >
@@ -144,7 +144,7 @@ export default function Dashboard() {
                 )}
               </div>
             )}
-            <Link 
+            <Link
               href="/login"
               onClick={handleLogout}
               className="text-sm font-medium text-neutral-400 hover:text-white transition-colors bg-neutral-800/50 hover:bg-neutral-800 px-4 py-2 rounded-lg"
@@ -171,7 +171,7 @@ export default function Dashboard() {
                   <th className="py-4 px-6 border-b border-neutral-800 font-semibold sticky left-20 bg-neutral-900/90 backdrop-blur z-10 w-32">
                     Day
                   </th>
-                  <th className="py-4 px-6 border-b border-neutral-800 font-semibold text-center w-24">
+                  <th className="py-4 px-6 border-b border-neutral-800 font-semibold sticky left-20 bg-neutral-900/90 backdrop-blur z-10 w-32">
                     Week
                   </th>
                   {users.map(user => (
@@ -194,7 +194,7 @@ export default function Dashboard() {
                       {row.dayName}
                     </td>
                     <td className="py-3 px-6 text-center text-sm border-r border-neutral-800/50">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-xs">
+                      <span className="inline-flex items-center justify-center text-indigo-400 font-bold text-xs">
                         {row.week}
                       </span>
                     </td>
