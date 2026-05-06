@@ -36,7 +36,7 @@ app.post('/api/register', async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    res.status(201).json({ message: 'User registered successfully', user: { id: newUser.id, name: newUser.name, email: newUser.email, isApproved: newUser.isApproved } });
+    res.status(201).json({ message: 'User registered successfully', user: { id: newUser.id, name: newUser.name, email: newUser.email, isApproved: newUser.isApproved, isAdmin: newUser.isAdmin } });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -65,6 +65,7 @@ app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
         name: user.name,
         email: user.email,
         isApproved: user.isApproved,
+        isAdmin: user.isAdmin,
       }
     });
   } catch (error) {
@@ -82,12 +83,29 @@ app.get('/api/users', async (req: Request, res: Response) => {
         name: true,
         email: true,
         isApproved: true,
+        isAdmin: true,
         createdAt: true,
       }
     });
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.patch('/api/users/:id/approval', async (req: Request, res: Response): Promise<any> => {
+  const { id } = req.params;
+  const { isApproved } = req.body;
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: Number(id) },
+      data: { isApproved },
+    });
+    res.json({ message: 'User approval updated', user });
+  } catch (error) {
+    console.error('Error updating user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
