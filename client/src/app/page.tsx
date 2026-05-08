@@ -1,8 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const users = [
   { id: 1, name: "Alice" },
@@ -54,7 +72,6 @@ export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     const storedUserStr = localStorage.getItem('user');
@@ -106,51 +123,55 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto space-y-8">
 
         <header className="flex flex-col gap-2 relative">
-          <div className="absolute top-0 right-0 flex items-center gap-4">
+          <div className="absolute top-0 right-0 flex items-center gap-4 z-50">
             {user?.isAdmin && (
-              <div className="flex items-center gap-3 relative">
+              <div className="flex items-center gap-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20">
                   Admin
                 </span>
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 px-4 py-2 rounded-lg"
-                >
-                  Manage Users
-                </button>
-                {isDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-2 z-50">
-                    <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-wider px-3 py-2 mb-1">Team Members</h3>
-                    <div className="flex flex-col gap-1 max-h-60 overflow-y-auto custom-scrollbar">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300">
+                      Manage Users
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-72 bg-neutral-900 border-neutral-800 text-neutral-200">
+                    <DropdownMenuLabel className="text-neutral-500 uppercase tracking-wider">Team Members</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-neutral-800" />
+                    <div className="max-h-60 overflow-y-auto">
                       {teamMembers.map(member => (
-                        <div key={member.id} className="flex items-center justify-between px-3 py-2 hover:bg-neutral-800/50 rounded-lg transition-colors">
-                          <div className="truncate pr-2">
-                            <p className="text-sm font-medium text-neutral-200 truncate">{member.name}</p>
-                            <p className="text-xs text-neutral-500 truncate">{member.email}</p>
+                        <DropdownMenuItem
+                          key={member.id}
+                          className="flex justify-between items-center focus:bg-neutral-800/50"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          <div className="flex flex-col pr-4">
+                            <span className="font-medium">{member.name}</span>
+                            <span className="text-xs text-neutral-500">{member.email}</span>
                           </div>
-                          <button
-                            onClick={() => toggleApproval(member.id, member.isApproved)}
-                            className={`flex-shrink-0 w-10 h-5 rounded-full relative transition-colors ${member.isApproved ? 'bg-emerald-500' : 'bg-neutral-700'}`}
+                          <Toggle
+                            pressed={member.isApproved}
+                            onPressedChange={() => toggleApproval(member.id, member.isApproved)}
+                            className={`data-[state=on]:bg-emerald-500 data-[state=on]:text-white ${!member.isApproved && 'bg-neutral-800 text-neutral-400'}`}
+                            size="sm"
                           >
-                            <span className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${member.isApproved ? 'translate-x-5' : 'translate-x-0'}`} />
-                          </button>
-                        </div>
+                            {member.isApproved ? 'Approved' : 'Pending'}
+                          </Toggle>
+                        </DropdownMenuItem>
                       ))}
                       {teamMembers.length === 0 && (
-                        <div className="px-3 py-2 text-sm text-neutral-500 text-center">No users found.</div>
+                        <DropdownMenuItem disabled className="text-neutral-500">No users found.</DropdownMenuItem>
                       )}
                     </div>
-                  </div>
-                )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
-            <Link
-              href="/login"
-              onClick={handleLogout}
-              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors bg-neutral-800/50 hover:bg-neutral-800 px-4 py-2 rounded-lg"
-            >
-              Log Out
-            </Link>
+            <Button asChild variant="ghost" className="text-neutral-400 hover:text-white hover:bg-neutral-800" onClick={handleLogout}>
+              <Link href="/login">
+                Log Out
+              </Link>
+            </Button>
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
             Employee Dashboard
@@ -162,55 +183,55 @@ export default function Dashboard() {
 
         <main className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-neutral-950/50 text-neutral-300 text-sm uppercase tracking-wider">
-                  <th className="py-4 px-6 border-b border-neutral-800 font-semibold sticky left-0 bg-neutral-900/90 backdrop-blur z-10 w-20 text-center">
+            <Table className="w-full text-left">
+              <TableHeader className="bg-neutral-950/50">
+                <TableRow className="border-neutral-800 hover:bg-transparent">
+                  <TableHead className="py-4 px-6 text-neutral-300 font-semibold sticky left-0 bg-neutral-900/90 backdrop-blur z-20 w-20 text-center border-b border-neutral-800">
                     Date
-                  </th>
-                  <th className="py-4 px-6 border-b border-neutral-800 font-semibold sticky left-20 bg-neutral-900/90 backdrop-blur z-10 w-32">
+                  </TableHead>
+                  <TableHead className="py-4 px-6 text-neutral-300 font-semibold sticky left-20 bg-neutral-900/90 backdrop-blur z-20 w-32 border-b border-neutral-800">
                     Day
-                  </th>
-                  <th className="py-4 px-6 border-b border-neutral-800 font-semibold sticky left-20 bg-neutral-900/90 backdrop-blur z-10 w-32">
+                  </TableHead>
+                  <TableHead className="py-4 px-6 text-neutral-300 font-semibold sticky left-20 bg-neutral-900/90 backdrop-blur z-20 w-32 border-b border-neutral-800">
                     Week
-                  </th>
+                  </TableHead>
                   {users.map(user => (
-                    <th key={user.id} className="py-4 px-6 border-b border-neutral-800 font-semibold text-center">
+                    <TableHead key={user.id} className="py-4 px-6 text-neutral-300 font-semibold text-center border-b border-neutral-800">
                       {user.name}
-                    </th>
+                    </TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-800/50">
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {data.map((row) => (
-                  <tr
+                  <TableRow
                     key={row.id}
-                    className="hover:bg-neutral-800/50 transition-colors group"
+                    className="border-neutral-800/50 hover:bg-neutral-800/50 transition-colors group"
                   >
-                    <td className="py-3 px-6 whitespace-nowrap text-sm text-neutral-300 font-bold sticky left-0 bg-neutral-900 group-hover:bg-neutral-800 transition-colors text-center border-r border-neutral-800/50">
+                    <TableCell className="py-3 px-6 whitespace-nowrap text-sm text-neutral-300 font-bold sticky left-0 bg-neutral-900 group-hover:bg-neutral-800 transition-colors text-center border-r border-neutral-800/50 z-10">
                       {row.dateNum}
-                    </td>
-                    <td className="py-3 px-6 whitespace-nowrap text-sm text-neutral-400 font-medium sticky left-20 bg-neutral-900 group-hover:bg-neutral-800 transition-colors border-r border-neutral-800/50">
+                    </TableCell>
+                    <TableCell className="py-3 px-6 whitespace-nowrap text-sm text-neutral-400 font-medium sticky left-20 bg-neutral-900 group-hover:bg-neutral-800 transition-colors border-r border-neutral-800/50 z-10">
                       {row.dayName}
-                    </td>
-                    <td className="py-3 px-6 text-center text-sm border-r border-neutral-800/50">
+                    </TableCell>
+                    <TableCell className="py-3 px-6 whitespace-nowrap text-sm text-neutral-400 font-medium sticky left-20 bg-neutral-900 group-hover:bg-neutral-800 transition-colors border-r border-neutral-800/50 z-10">
                       <span className="inline-flex items-center justify-center text-indigo-400 font-bold text-xs">
                         {row.week}
                       </span>
-                    </td>
+                    </TableCell>
                     {row.availability.map((avail, index) => (
-                      <td key={index} className="py-3 px-6 text-center">
+                      <TableCell key={index} className="py-3 px-6 text-center">
                         {avail.available ? (
                           <div className="mx-auto w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></div>
                         ) : (
                           <div className="mx-auto w-3 h-3 rounded-full bg-neutral-700"></div>
                         )}
-                      </td>
+                      </TableCell>
                     ))}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </main>
 
