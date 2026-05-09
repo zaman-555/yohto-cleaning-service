@@ -77,7 +77,12 @@ app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
 // Get users endpoint (could be for the dashboard or admin)
 app.get('/api/users', async (req: Request, res: Response) => {
   try {
+    const approvedQuery = req.query.approved;
+    const approvedFilter =
+      approvedQuery === 'true' ? true : approvedQuery === 'false' ? false : undefined;
+
     const users = await prisma.user.findMany({
+      where: approvedFilter === undefined ? undefined : { isApproved: approvedFilter },
       select: {
         id: true,
         name: true,
