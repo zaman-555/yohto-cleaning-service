@@ -115,6 +115,76 @@ app.patch('/api/users/:id/approval', async (req: Request, res: Response): Promis
   }
 });
 
+app.post('/api/tasks', async (req: Request, res: Response): Promise<any> => {
+  const {
+    timestamp,
+    userId,
+    companyName,
+    task,
+    carName,
+    transportType,
+    location,
+  } = req.body as {
+    timestamp?: string;
+    userId?: number;
+    companyName?: string;
+    task?: string;
+    carName?: string;
+    transportType?: string;
+    location?: string;
+  };
+
+  const allowedTransportTypes = ['own car', 'company car', 'going with other'];
+
+  if (!timestamp || !userId || !companyName || !task || !carName || !transportType || !location) {
+    return res.status(400).json({ error: 'All task fields are required' });
+  }
+
+  if (!allowedTransportTypes.includes(transportType)) {
+    return res.status(400).json({ error: 'Invalid transport type' });
+  }
+
+  let parsedLocation: URL;
+  try {
+    parsedLocation = new URL(location);
+  } catch {
+    return res.status(400).json({ error: 'Location must be a valid URL' });
+  }
+
+  const parsedTimestamp = new Date(timestamp);
+  if (Number.isNaN(parsedTimestamp.getTime())) {
+    return res.status(400).json({ error: 'Timestamp must be a valid date/time' });
+  }
+
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: { id: Number(userId) },
+      select: { id: true },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const createdTask = await prisma.task.create({
+      data: {
+        timestamp: parsedTimestamp,
+        userId: Number(userId),
+        companyName: companyName.trim(),
+        task: task.trim(),
+        carName: carName.trim(),
+        transportType,
+        location: parsedLocation.toString(),
+      },
+    });
+
+    return res.status(201).json({ message: 'Task created', task: createdTask });
+  } catch (error) {
+    console.error('Error creating task:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

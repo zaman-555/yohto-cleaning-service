@@ -9,6 +9,7 @@ export default async function DashboardPage() {
     fetchApprovedTeamMembers(),
   ]);
   const approvedUsers: User[] = approvedMembers
+    .filter((member) => !member.isAdmin)
     .map((member) => ({ id: member.id, name: member.name }));
   const tableData = generateTableData(approvedUsers);
 

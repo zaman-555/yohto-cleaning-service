@@ -28,4 +28,17 @@ export type TeamMember = {
   name: string;
   email: string;
   isApproved: boolean;
+  isAdmin?: boolean;
+};
+
+export type TransportType = "own car" | "company car" | "going with other";
+
+export type TaskInput = {
+  timestamp: string;
+  userId: number;
+  companyName: string;
+  task: string;
+  carName: string;
+  transportType: TransportType;
+  location: string;
 };

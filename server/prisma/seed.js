@@ -1,8 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
 async function main() {
     console.log('Seeding database...');
-    const adminEmail = 'admin@example.com';
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminEmail || !adminPassword) {
+        console.error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env');
+        process.exit(1);
+    }
     // Check if admin already exists
     const existingAdmin = await prisma.user.findUnique({
         where: { email: adminEmail }
@@ -16,14 +23,14 @@ async function main() {
         data: {
             name: 'System Admin',
             email: adminEmail,
-            password: 'adminpassword123', // In a real app, ensure this is hashed
+            password: adminPassword, // In a real app, ensure this is hashed
             isApproved: true,
             isAdmin: true,
         }
     });
     console.log('Admin user created successfully:');
     console.log(`- Email: ${admin.email}`);
-    console.log(`- Password: adminpassword123`);
+    console.log(`- Password: [HIDDEN]`);
     console.log(`- Status: Approved & Admin`);
 }
 main()

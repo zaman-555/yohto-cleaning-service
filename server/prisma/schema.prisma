@@ -16,4 +16,22 @@ model User {
   isAdmin    Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  tasks      Task[]
+}
+
+model Task {
+  id            Int      @id @default(autoincrement())
+  timestamp     DateTime
+  userId        Int
+  companyName   String
+  task          String
+  carName       String
+  transportType String
+  location      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("task")
 }
