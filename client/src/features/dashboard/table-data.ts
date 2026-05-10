@@ -27,7 +27,9 @@ export const generateTableData = (users: User[]): DashboardRow[] => {
       dateNum: day,
       calendarYear: year,
       calendarMonth,
-      dayName: currentDate.toLocaleDateString("en-US", { weekday: "long" }),
+      dayName: currentDate
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .slice(0, 3),
       week: getWeekNumber(currentDate),
       availability,
     });
