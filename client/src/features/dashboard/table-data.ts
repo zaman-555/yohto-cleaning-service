@@ -11,11 +11,12 @@ export const generateTableData = (users: User[]): DashboardRow[] => {
   const data: DashboardRow[] = [];
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthIndex = now.getMonth();
+  const calendarMonth = monthIndex + 1;
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const currentDate = new Date(year, month, day);
+    const currentDate = new Date(year, monthIndex, day);
     const availability = users.map((user) => ({
       userId: user.id,
       available: Math.random() > 0.3,
@@ -24,6 +25,8 @@ export const generateTableData = (users: User[]): DashboardRow[] => {
     data.push({
       id: day,
       dateNum: day,
+      calendarYear: year,
+      calendarMonth,
       dayName: currentDate.toLocaleDateString("en-US", { weekday: "long" }),
       week: getWeekNumber(currentDate),
       availability,

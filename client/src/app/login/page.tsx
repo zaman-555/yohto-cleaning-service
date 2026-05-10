@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { publicApiUrl } from "@/env";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,7 +42,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch(publicApiUrl("/api/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),

@@ -9,16 +9,18 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ClipboardPlus } from "lucide-react";
-import { createTask, updateUserApproval } from '@/features/dashboard/actions';
+import { CirclePlus, MapPin, Pencil } from "lucide-react";
+import { createTask, updateTask, updateUserApproval } from '@/features/dashboard/actions';
 import type {
   CurrentUser,
   DashboardRow,
   TaskInput,
+  TaskRecord,
   TeamMember,
   TransportType,
   User,
-} from '@/features/dashboard/types';
+} from "@/features/dashboard/types";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { Input } from "@/components/ui/input";
@@ -44,18 +46,109 @@ type DashboardClientProps = {
   initialData: DashboardRow[];
   initialTeamMembers: TeamMember[];
   users: User[];
+  initialTasks: TaskRecord[];
 };
 
-const getDefaultTimestamp = () => {
+const TRANSPORT_TYPES = ["own car", "company car", "going with other"] as const satisfies readonly TransportType[];
+
+const TRANSPORT_TYPE_META = {
+  "own car": {
+    dotClass: "bg-emerald-400 ring-2 ring-emerald-400/35",
+    label: "Own car",
+  },
+  "company car": {
+    dotClass: "bg-amber-400 ring-2 ring-amber-400/35",
+    label: "Company car",
+  },
+  "going with other": {
+    dotClass: "bg-violet-400 ring-2 ring-violet-400/35",
+    label: "Going with other",
+  },
+} as const satisfies Record<TransportType, { dotClass: string; label: string }>;
+
+function transportTypeMeta(type: string): { dotClass: string; label: string } {
+  const known = TRANSPORT_TYPE_META[type as TransportType];
+  if (known) {
+    return known;
+  }
+  return {
+    dotClass: "bg-neutral-500 ring-2 ring-neutral-500/30",
+    label: type || "Transport",
+  };
+}
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+const getDefaultTimeLocal = () => {
   const now = new Date();
-  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 16);
+  return `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
 };
+
+function localTimeFromIso(iso: string): string {
+  const d = new Date(iso);
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function combineDateAndTime(
+  year: number,
+  month1to12: number,
+  dayOfMonth: number,
+  timeHHmm: string
+): Date | null {
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(timeHHmm.trim());
+  if (!match) {
+    return null;
+  }
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    !Number.isFinite(hours) ||
+    !Number.isFinite(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+  return new Date(year, month1to12 - 1, dayOfMonth, hours, minutes, 0, 0);
+}
+
+function taskCellKey(userId: number, dayOfMonth: number) {
+  return `${userId}-${dayOfMonth}`;
+}
+
+function TransportTypeDot({ transportType }: { transportType: string }) {
+  const meta = transportTypeMeta(transportType);
+  return (
+    <span className="inline-flex shrink-0 items-center justify-center" title={meta.label}>
+      <span className="sr-only">{meta.label}</span>
+      <span
+        aria-hidden
+        className={cn("inline-block size-2.5 rounded-full", meta.dotClass)}
+      />
+    </span>
+  );
+}
+
+/** Keeps the latest task per user per calendar day (API returns newest first). */
+function tasksByUserAndDay(tasks: TaskRecord[]) {
+  const map = new Map<string, TaskRecord>();
+  for (const t of tasks) {
+    const day = new Date(t.timestamp).getDate();
+    const key = taskCellKey(t.userId, day);
+    if (!map.has(key)) {
+      map.set(key, t);
+    }
+  }
+  return map;
+}
 
 export default function DashboardClient({
   initialData,
   initialTeamMembers,
   users,
+  initialTasks,
 }: DashboardClientProps) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,33 +158,79 @@ export default function DashboardClient({
     userId: number;
     userName: string;
     dateLabel: string;
+    calendarYear: number;
+    calendarMonth: number;
+    dayOfMonth: number;
   } | null>(null);
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
   const [taskSubmitError, setTaskSubmitError] = useState<string | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const router = useRouter();
 
-  const [taskForm, setTaskForm] = useState<Omit<TaskInput, "userId">>({
-    timestamp: getDefaultTimestamp(),
+  const [taskTime, setTaskTime] = useState(getDefaultTimeLocal);
+  const [taskForm, setTaskForm] = useState<Omit<TaskInput, "userId" | "timestamp">>({
     companyName: "",
     task: "",
     carName: "",
-    transportType: "own car",
+    transportType: TRANSPORT_TYPES[0],
     location: "",
   });
 
+  const taskLookup = useMemo(() => tasksByUserAndDay(initialTasks), [initialTasks]);
+
   const openTaskDialog = useCallback((selectedUserId: number, selectedUserName: string, row: DashboardRow) => {
+    const rowDate = new Date(row.calendarYear, row.calendarMonth - 1, row.dateNum);
+    const dateLabel = rowDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    setEditingTaskId(null);
     setSelectedTaskUser({
       userId: selectedUserId,
       userName: selectedUserName,
-      dateLabel: `${row.dayName} ${row.dateNum}`,
+      dateLabel,
+      calendarYear: row.calendarYear,
+      calendarMonth: row.calendarMonth,
+      dayOfMonth: row.dateNum,
     });
+    setTaskTime(getDefaultTimeLocal());
     setTaskForm({
-      timestamp: getDefaultTimestamp(),
       companyName: "",
       task: "",
       carName: "",
-      transportType: "own car",
+      transportType: TRANSPORT_TYPES[0],
       location: "",
+    });
+    setTaskSubmitError(null);
+    setIsTaskDialogOpen(true);
+  }, []);
+
+  const openEditTaskDialog = useCallback((selectedUserName: string, row: DashboardRow, record: TaskRecord) => {
+    const rowDate = new Date(row.calendarYear, row.calendarMonth - 1, row.dateNum);
+    const dateLabel = rowDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    setEditingTaskId(record.id);
+    setSelectedTaskUser({
+      userId: record.userId,
+      userName: selectedUserName,
+      dateLabel,
+      calendarYear: row.calendarYear,
+      calendarMonth: row.calendarMonth,
+      dayOfMonth: row.dateNum,
+    });
+    setTaskTime(localTimeFromIso(record.timestamp));
+    setTaskForm({
+      companyName: record.companyName,
+      task: record.task,
+      carName: record.carName,
+      transportType: record.transportType as TransportType,
+      location: record.location,
     });
     setTaskSubmitError(null);
     setIsTaskDialogOpen(true);
@@ -137,25 +276,67 @@ export default function DashboardClient({
         id: `user-${currentUser.id}`,
         header: currentUser.name,
         cell: ({ row }: { row: { original: DashboardRow } }) => {
+          const existing = taskLookup.get(
+            taskCellKey(currentUser.id, row.original.dateNum)
+          );
+
+          if (existing) {
+            return (
+              <div className="flex h-full min-h-[6.5rem] w-full flex-col items-center justify-center gap-2 border-l border-transparent px-4 py-3 text-center">
+                <p className="w-full max-w-full text-sm font-semibold leading-snug text-neutral-50">
+                  {existing.companyName}
+                </p>
+                <p className="line-clamp-3 w-full max-w-full text-sm leading-relaxed text-neutral-300">
+                  {existing.task}
+                </p>
+                <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 text-xs text-neutral-400">
+                  <span className="max-w-full font-medium">{existing.carName}</span>
+                  <span aria-hidden className="text-neutral-500">
+                    ·
+                  </span>
+                  <TransportTypeDot transportType={existing.transportType} />
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-0.5">
+                  <a
+                    href={existing.location}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex text-indigo-400 transition-colors hover:text-indigo-300"
+                    aria-label="Open location"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MapPin className="h-4 w-4" aria-hidden />
+                  </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditTaskDialog(currentUser.name, row.original, existing);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <button
               type="button"
               onClick={() => openTaskDialog(currentUser.id, currentUser.name, row.original)}
-              className="flex h-full w-full items-center justify-center rounded-md px-6 py-3 hover:bg-neutral-800/60 transition-colors"
+              className="flex h-full w-full items-center justify-center rounded-md px-6 py-5 text-neutral-500 transition-colors hover:bg-neutral-800/60 hover:text-indigo-400"
               aria-label={`Add task for ${currentUser.name}`}
             >
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-xs font-semibold text-neutral-200"
-              >
-                <ClipboardPlus className="h-3.5 w-3.5" />
-                Add Task
-              </span>
+              <CirclePlus className="h-5 w-5 shrink-0" strokeWidth={1.5} aria-hidden />
             </button>
           );
         },
       })),
     ],
-    [users, openTaskDialog]
+    [users, openTaskDialog, openEditTaskDialog, taskLookup]
   );
 
   const table = useReactTable({
@@ -211,24 +392,50 @@ export default function DashboardClient({
     setIsSubmittingTask(true);
     setTaskSubmitError(null);
 
-    const result = await createTask({
-      userId: selectedTaskUser.userId,
-      timestamp: new Date(taskForm.timestamp).toISOString(),
+    const at = combineDateAndTime(
+      selectedTaskUser.calendarYear,
+      selectedTaskUser.calendarMonth,
+      selectedTaskUser.dayOfMonth,
+      taskTime
+    );
+    if (!at) {
+      setTaskSubmitError("Please enter a valid time.");
+      setIsSubmittingTask(false);
+      return;
+    }
+
+    const body = {
+      timestamp: at.toISOString(),
       companyName: taskForm.companyName,
       task: taskForm.task,
       carName: taskForm.carName,
       transportType: taskForm.transportType as TransportType,
       location: taskForm.location,
-    });
+    };
+
+    const result =
+      editingTaskId != null
+        ? await updateTask(editingTaskId, body)
+        : await createTask({
+          userId: selectedTaskUser.userId,
+          ...body,
+        });
 
     if (!result.ok) {
-      setTaskSubmitError(result.error ?? "Failed to create task. Please check your input and try again.");
+      setTaskSubmitError(
+        result.error ??
+        (editingTaskId != null
+          ? "Failed to update task. Please check your input and try again."
+          : "Failed to create task. Please check your input and try again.")
+      );
       setIsSubmittingTask(false);
       return;
     }
 
     setIsSubmittingTask(false);
+    setEditingTaskId(null);
     setIsTaskDialogOpen(false);
+    router.refresh();
   };
 
   if (loading) {
@@ -299,31 +506,34 @@ export default function DashboardClient({
 
         <main className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left caption-bottom text-sm">
+            <table className="w-full text-center caption-bottom text-sm">
               <thead className="bg-neutral-950/50">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id} className="border-neutral-800 hover:bg-transparent border-b">
                     {headerGroup.headers.map((header) => {
                       const id = header.column.id;
+                      const isUserHeader = id.startsWith("user-");
                       const stickyClass =
                         id === 'dateNum'
                           ? 'sticky left-0 bg-neutral-900/90 backdrop-blur z-20 w-20 text-center'
                           : id === 'dayName'
-                            ? 'sticky left-20 bg-neutral-900/90 backdrop-blur z-20 w-32'
+                            ? 'sticky left-20 bg-neutral-900/90 backdrop-blur z-20 w-32 text-center'
                             : id === 'week'
-                              ? 'sticky left-[13rem] bg-neutral-900/90 backdrop-blur z-20 w-32'
-                              : 'text-center';
+                              ? 'sticky left-[13rem] bg-neutral-900/90 backdrop-blur z-20 w-32 text-center'
+                              : isUserHeader
+                                ? 'w-56 min-w-56 max-w-56 text-center'
+                                : 'text-center';
                       return (
                         <th
                           key={header.id}
-                          className={`py-4 px-6 text-neutral-300 font-semibold border-b border-neutral-800 h-10 text-left align-middle whitespace-nowrap ${stickyClass}`}
+                          className={`py-4 px-6 text-neutral-300 font-semibold border-b border-neutral-800 h-10 text-center align-middle whitespace-nowrap ${stickyClass}`}
                         >
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                         </th>
                       );
                     })}
@@ -343,14 +553,16 @@ export default function DashboardClient({
                         id === 'dateNum'
                           ? 'sticky left-0 bg-neutral-900 group-hover:bg-neutral-800 text-center border-r border-neutral-800/50 z-10 text-neutral-300 font-bold'
                           : id === 'dayName'
-                            ? 'sticky left-20 bg-neutral-900 group-hover:bg-neutral-800 border-r border-neutral-800/50 z-10 text-neutral-400 font-medium'
+                            ? 'sticky left-20 bg-neutral-900 group-hover:bg-neutral-800 text-center border-r border-neutral-800/50 z-10 text-neutral-400 font-medium'
                             : id === 'week'
-                              ? 'sticky left-[13rem] bg-neutral-900 group-hover:bg-neutral-800 border-r border-neutral-800/50 z-10 text-neutral-400 font-medium'
-                              : 'text-center';
+                              ? 'sticky left-[13rem] bg-neutral-900 group-hover:bg-neutral-800 text-center border-r border-neutral-800/50 z-10 text-neutral-400 font-medium'
+                              : isUserCell
+                                ? 'w-56 min-w-56 max-w-56 text-center'
+                                : 'text-center';
                       return (
                         <td
                           key={cell.id}
-                          className={`${isUserCell ? "p-0" : "py-3 px-6"} whitespace-nowrap text-sm align-middle ${stickyClass}`}
+                          className={`${isUserCell ? "p-0 whitespace-normal" : "py-3 px-6 whitespace-nowrap"} text-sm align-middle ${stickyClass}`}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
@@ -363,26 +575,51 @@ export default function DashboardClient({
           </div>
         </main>
 
-        <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <Dialog
+          open={isTaskDialogOpen}
+          onOpenChange={(open) => {
+            setIsTaskDialogOpen(open);
+            if (!open) {
+              setEditingTaskId(null);
+            }
+          }}
+        >
           <DialogContent className="sm:max-w-lg border-neutral-800 bg-neutral-900 text-neutral-100">
             <DialogHeader>
-              <DialogTitle className="text-neutral-100">Add Task</DialogTitle>
+              <DialogTitle className="text-neutral-100">
+                {editingTaskId != null ? "Update task" : "Add Task"}
+              </DialogTitle>
               <DialogDescription className="text-neutral-400">
                 {selectedTaskUser
-                  ? `Add a task for ${selectedTaskUser.userName} on ${selectedTaskUser.dateLabel}.`
+                  ? editingTaskId != null
+                    ? `Edit task for ${selectedTaskUser.userName}. Date comes from the cell you selected.`
+                    : `Add a task for ${selectedTaskUser.userName}. Date comes from the cell you clicked.`
                   : "Add a task."}
               </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleTaskSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="timestamp">Timestamp</Label>
+                <Label>Date</Label>
+                <div
+                  className="flex h-8 w-full items-center rounded-lg border border-neutral-700 bg-neutral-800/40 px-2.5 text-sm text-neutral-200"
+                  aria-live="polite"
+                >
+                  {selectedTaskUser?.dateLabel ?? "—"}
+                </div>
+                <p className="text-xs text-neutral-500">
+                  Set from the row you selected; it cannot be changed here.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="taskTime">Time</Label>
                 <Input
-                  id="timestamp"
-                  type="datetime-local"
+                  id="taskTime"
+                  type="time"
                   required
-                  value={taskForm.timestamp}
-                  onChange={(e) => setTaskForm((prev) => ({ ...prev, timestamp: e.target.value }))}
+                  value={taskTime}
+                  onChange={(e) => setTaskTime(e.target.value)}
                   className="border-neutral-700 bg-neutral-800/60 text-neutral-100"
                 />
               </div>
@@ -421,20 +658,37 @@ export default function DashboardClient({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="transportType">Transport Type</Label>
-                <select
-                  id="transportType"
-                  required
-                  value={taskForm.transportType}
-                  onChange={(e) =>
-                    setTaskForm((prev) => ({ ...prev, transportType: e.target.value as TransportType }))
-                  }
-                  className="h-8 w-full rounded-lg border border-neutral-700 bg-neutral-800/60 px-2.5 text-sm text-neutral-100 outline-none focus-visible:border-indigo-400 focus-visible:ring-3 focus-visible:ring-indigo-500/30"
+                <Label id="transport-type-label">Transport</Label>
+                <div
+                  role="radiogroup"
+                  aria-labelledby="transport-type-label"
+                  className="flex flex-wrap items-center gap-3"
                 >
-                  <option value="own car">own car</option>
-                  <option value="company car">company car</option>
-                  <option value="going with other">going with other</option>
-                </select>
+                  {TRANSPORT_TYPES.map((t) => {
+                    const meta = TRANSPORT_TYPE_META[t];
+                    const selected = taskForm.transportType === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        title={meta.label}
+                        onClick={() =>
+                          setTaskForm((prev) => ({ ...prev, transportType: t }))
+                        }
+                        className={cn(
+                          "rounded-full p-1 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900",
+                          selected &&
+                            "ring-2 ring-indigo-400 ring-offset-2 ring-offset-neutral-900"
+                        )}
+                      >
+                        <span className={cn("block size-3 rounded-full", meta.dotClass)} />
+                        <span className="sr-only">{meta.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -468,7 +722,11 @@ export default function DashboardClient({
                   disabled={isSubmittingTask || !selectedTaskUser}
                   className="bg-indigo-500 text-white hover:bg-indigo-400"
                 >
-                  {isSubmittingTask ? "Saving..." : "Save Task"}
+                  {isSubmittingTask
+                    ? "Saving..."
+                    : editingTaskId != null
+                      ? "Update task"
+                      : "Save Task"}
                 </Button>
               </DialogFooter>
             </form>
