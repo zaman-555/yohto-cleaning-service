@@ -8,6 +8,7 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node ./src/index.ts",
     "build": "tsc",
     "start:prod": "node dist/index.js",
+    "migrate": "prisma migrate deploy",
     "postinstall": "prisma generate"
   },
   "keywords": [],

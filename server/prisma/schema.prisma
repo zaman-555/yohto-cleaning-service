@@ -36,3 +36,17 @@ model Task {
   @@index([timestamp])
   @@map("task")
 }
+
+/// Weekly showcase cells. `rowKey` encodes placement, e.g. `2026-w18-1` (year, calendar week, row).
+model TaskDetail {
+  id        Int      @id @default(autoincrement())
+  rowKey    String
+  columnKey String
+  date      DateTime
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  @@unique([rowKey, columnKey], map: "task_details_rowKey_columnKey_key")
+  @@map("task_details")
+}

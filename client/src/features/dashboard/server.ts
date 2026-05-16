@@ -1,6 +1,7 @@
 import "server-only";
 
 import { serverApiUrl } from "@/env";
+import type { TaskDetailRecord } from "@/features/dashboard/weekly-showcase-types";
 import type { TaskRecord, TeamMember } from "./types";
 
 export async function fetchTeamMembers(): Promise<TeamMember[]> {
@@ -47,6 +48,27 @@ export async function fetchTasksForMonth(year: number, month: number): Promise<T
     }
 
     return (await response.json()) as TaskRecord[];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchTaskDetailsForWeeks(
+  year: number,
+  minWeek: number,
+  maxWeek: number
+): Promise<TaskDetailRecord[]> {
+  try {
+    const response = await fetch(
+      serverApiUrl(`/api/task-details?year=${year}&minWeek=${minWeek}&maxWeek=${maxWeek}`),
+      { cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return (await response.json()) as TaskDetailRecord[];
   } catch {
     return [];
   }

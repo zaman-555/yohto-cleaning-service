@@ -1,6 +1,10 @@
 "use server";
 
 import { serverApiUrl } from "@/env";
+import type {
+  TaskDetailRecord,
+  WeeklyShowcaseColumnKey,
+} from "@/features/dashboard/weekly-showcase-types";
 import type { TaskInput, TaskUpdateBody } from "./types";
 
 export async function updateUserApproval(userId: number, isApproved: boolean): Promise<boolean> {
@@ -58,6 +62,49 @@ export async function updateTask(taskId: number, payload: TaskUpdateBody): Promi
 
     const data = (await response.json().catch(() => null)) as { error?: string } | null;
     return { ok: false, error: data?.error ?? "Failed to update task." };
+  } catch {
+    return { ok: false, error: "Request failed. Please check backend connection." };
+  }
+}
+
+export type UpsertWeeklyTaskDetailResult =
+  | { ok: true; detail: TaskDetailRecord }
+  | { ok: false; error: string };
+
+export async function upsertWeeklyTaskDetail(input: {
+  year: number;
+  weekNumber: number;
+  rowKey: string;
+  columnKey: WeeklyShowcaseColumnKey;
+  text: string;
+  weekdayLabelForDate: string;
+}): Promise<UpsertWeeklyTaskDetailResult> {
+  try {
+    const response = await fetch(serverApiUrl("/api/task-details/upsert"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      cache: "no-store",
+    });
+
+    const data = (await response.json().catch(() => null)) as
+      | TaskDetailRecord
+      | { error?: string }
+      | null;
+
+    if (!response.ok) {
+      const err =
+        data && typeof data === "object" && "error" in data && typeof data.error === "string"
+          ? data.error
+          : "Failed to save cell.";
+      return { ok: false, error: err };
+    }
+
+    if (!data || typeof data !== "object" || !("id" in data)) {
+      return { ok: false, error: "Invalid response from server." };
+    }
+
+    return { ok: true, detail: data as TaskDetailRecord };
   } catch {
     return { ok: false, error: "Request failed. Please check backend connection." };
   }

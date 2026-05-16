@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import type { CurrentUser, TeamMember } from "@/features/dashboard/types";
 import { Button } from "@/components/ui/button";
@@ -18,7 +21,15 @@ type DashboardHeaderProps = {
   pendingApprovalIds: Set<number>;
   onToggleApproval: (id: number, currentStatus: boolean) => void;
   onLogout: () => void;
+  title?: string;
+  subtitle?: string;
 };
+
+function navLinkClass(active: boolean) {
+  return active
+    ? "font-medium text-cyan-300 underline decoration-cyan-500/50 underline-offset-4"
+    : "text-neutral-400 transition-colors hover:text-neutral-200";
+}
 
 export function DashboardHeader({
   user,
@@ -26,7 +37,13 @@ export function DashboardHeader({
   pendingApprovalIds,
   onToggleApproval,
   onLogout,
+  title = "Employee Dashboard",
+  subtitle = "Manage your team's availability and schedule at a glance.",
 }: DashboardHeaderProps) {
+  const pathname = usePathname();
+  const onMain = pathname === "/";
+  const onWeekly = pathname === "/weekly";
+
   return (
     <header className="relative flex flex-col gap-2">
       <div className="absolute right-0 top-0 z-50 flex items-center gap-4">
@@ -111,11 +128,20 @@ export function DashboardHeader({
         </Button>
       </div>
       <h1 className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">
-        Employee Dashboard
+        {title}
       </h1>
-      <p className="text-lg text-neutral-400">
-        Manage your team&apos;s availability and schedule at a glance.
-      </p>
+      <p className="text-lg text-neutral-400">{subtitle}</p>
+      <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm">
+        <Link href="/" className={navLinkClass(onMain)}>
+          Main dashboard
+        </Link>
+        <span className="text-neutral-600" aria-hidden>
+          ·
+        </span>
+        <Link href="/weekly" className={navLinkClass(onWeekly)}>
+          Weekly showcase
+        </Link>
+      </nav>
     </header>
   );
 }
