@@ -1,7 +1,34 @@
 import type { Request, Response } from 'express';
 import { isValidTransportType } from '../constants/task';
+import { isValidTaskShift, normalizeTaskShift } from '../constants/task-shift';
 import * as taskModel from '../models/task.model';
 import * as userModel from '../models/user.model';
+
+function formatDateOnly(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function parseDateOnly(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return parsed;
+}
 
 export async function getTasks(req: Request, res: Response): Promise<void> {
   const year = Number(req.query.year);
@@ -14,7 +41,12 @@ export async function getTasks(req: Request, res: Response): Promise<void> {
 
   try {
     const tasks = await taskModel.findTasksInMonth(year, month);
-    res.json(tasks);
+    res.json(
+      tasks.map((task) => ({
+        ...task,
+        date: formatDateOnly(task.date),
+      })),
+    );
   } catch (error) {
     console.error('Error fetching tasks:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -22,7 +54,8 @@ export async function getTasks(req: Request, res: Response): Promise<void> {
 }
 
 type TaskBody = {
-  timestamp?: string;
+  date?: string;
+  shift?: string;
   userId?: number;
   companyName?: string;
   task?: string;
@@ -32,19 +65,12 @@ type TaskBody = {
 };
 
 function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
-  const {
-    timestamp,
-    userId,
-    companyName,
-    task,
-    carName,
-    transportType,
-    location,
-  } = body;
+  const { date, shift, userId, companyName, task, carName, transportType, location } = body;
 
   const userIdNum = userId !== undefined && userId !== null ? Number(userId) : NaN;
   if (
-    !timestamp ||
+    !date ||
+    !shift ||
     (requireUserId && !Number.isFinite(userIdNum)) ||
     !companyName ||
     !task ||
@@ -59,6 +85,10 @@ function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
     return { error: 'Invalid transport type' as const };
   }
 
+  if (!isValidTaskShift(shift)) {
+    return { error: 'Shift must be a valid time range (HH:mm-HH:mm)' as const };
+  }
+
   let parsedLocation: URL;
   try {
     parsedLocation = new URL(location);
@@ -66,14 +96,15 @@ function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
     return { error: 'Location must be a valid URL' as const };
   }
 
-  const parsedTimestamp = new Date(timestamp);
-  if (Number.isNaN(parsedTimestamp.getTime())) {
-    return { error: 'Timestamp must be a valid date/time' as const };
+  const parsedDate = parseDateOnly(date);
+  if (!parsedDate) {
+    return { error: 'Date must be a valid calendar date (YYYY-MM-DD)' as const };
   }
 
   return {
     parsed: {
-      parsedTimestamp,
+      parsedDate,
+      shift: normalizeTaskShift(shift),
       userId: requireUserId ? userIdNum : undefined,
       companyName: companyName.trim(),
       task: task.trim(),
@@ -91,7 +122,7 @@ export async function createTask(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const { parsedTimestamp, userId, companyName, task, carName, transportType, location } =
+  const { parsedDate, shift, userId, companyName, task, carName, transportType, location } =
     parsed.parsed;
 
   if (userId === undefined || !Number.isFinite(userId)) {
@@ -107,7 +138,8 @@ export async function createTask(req: Request, res: Response): Promise<void> {
     }
 
     const createdTask = await taskModel.createTask({
-      timestamp: parsedTimestamp,
+      date: parsedDate,
+      shift,
       userId,
       companyName,
       task,
@@ -116,7 +148,10 @@ export async function createTask(req: Request, res: Response): Promise<void> {
       location,
     });
 
-    res.status(201).json({ message: 'Task created', task: createdTask });
+    res.status(201).json({
+      message: 'Task created',
+      task: { ...createdTask, date: formatDateOnly(createdTask.date) },
+    });
   } catch (error) {
     console.error('Error creating task:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -137,7 +172,7 @@ export async function updateTask(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const { parsedTimestamp, companyName, task, carName, transportType, location } =
+  const { parsedDate, shift, companyName, task, carName, transportType, location } =
     parsed.parsed;
 
   try {
@@ -148,7 +183,8 @@ export async function updateTask(req: Request, res: Response): Promise<void> {
     }
 
     const updatedTask = await taskModel.updateTaskById(taskId, {
-      timestamp: parsedTimestamp,
+      date: parsedDate,
+      shift,
       companyName,
       task,
       carName,
@@ -156,7 +192,10 @@ export async function updateTask(req: Request, res: Response): Promise<void> {
       location,
     });
 
-    res.json({ message: 'Task updated', task: updatedTask });
+    res.json({
+      message: 'Task updated',
+      task: { ...updatedTask, date: formatDateOnly(updatedTask.date) },
+    });
   } catch (error) {
     console.error('Error updating task:', error);
     res.status(500).json({ error: 'Internal server error' });

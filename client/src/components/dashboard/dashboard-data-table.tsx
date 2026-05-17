@@ -1,18 +1,30 @@
-import { flexRender, type Table } from "@tanstack/react-table";
-import type { DashboardRow } from "@/features/dashboard/types";
+"use client";
 
-/** First three sticky columns: fixed widths + left offsets must stay in sync. */
-const LEAD_DATE_W = "w-8 min-w-8 max-w-8"; // 2rem — day of month
-const LEAD_DAY_W = "w-10 min-w-10 max-w-10"; // 2.5rem — 3-letter weekday
-const LEAD_WEEK_W = "w-10 min-w-10 max-w-10"; // 2.5rem — week number (e.g. 52)
+import { useLayoutEffect, useRef, useState } from "react";
+import { flexRender, type Row, type Table } from "@tanstack/react-table";
+import type { DashboardUserSummaries } from "@/features/dashboard/dashboard-summary";
+import type { DashboardRow, User } from "@/features/dashboard/types";
+import {
+  DashboardSummaryFooterLeading,
+  DashboardSummaryFooterScroll,
+} from "./dashboard-summary-footer";
+import {
+  DashboardTotHoursCell,
+  TOT_HOURS_HEADER_CLASS,
+  TotHoursHeaderLabel,
+} from "./dashboard-tot-hours-cell";
+import {
+  LEAD_DATE_W,
+  LEAD_DAY_W,
+  LEAD_WEEK_W,
+  LEADING_TOTAL_REM,
+  TOT_HOURS_MIN_REM,
+  TOT_HOURS_W,
+  USER_MIN_REM,
+} from "./dashboard-table-layout";
 
-/** Sum of widths before the week column: date (2rem) + day (2.5rem) */
-const LEAD_WEEK_LEFT = "left-[4.5rem]";
-
-/** Numeric values used to compute the table's responsive min-width.
-    Keep in sync with the Tailwind classes above. */
-const LEADING_TOTAL_REM = 7; // 2 + 2.5 + 2.5
-const USER_MIN_REM = 12; // each user column collapses no smaller than 12rem (w-48)
+const TABLE_CLASS =
+  "w-full border-separate border-spacing-0 table-fixed caption-bottom text-center text-sm";
 
 function isLeadingColumn(columnId: string): boolean {
   return columnId === "dateNum" || columnId === "dayName" || columnId === "week";
@@ -23,87 +35,200 @@ function leadingCellTypography(columnId: string): string {
   return "text-xs tabular-nums tracking-tight";
 }
 
-function headerStickyClass(columnId: string): string {
-  const isUserHeader = columnId.startsWith("user-");
+function leadingHeaderClass(columnId: string): string {
   if (columnId === "dateNum") {
-    return `sticky left-0 z-20 ${LEAD_DATE_W} border-b border-l border-r border-t border-neutral-600 bg-neutral-900/95 text-center backdrop-blur`;
+    return `${LEAD_DATE_W} border-b border-l border-r border-t border-neutral-600 bg-neutral-900/95 text-center backdrop-blur`;
   }
   if (columnId === "dayName") {
-    return `sticky left-8 z-20 ${LEAD_DAY_W} border-b border-r border-t border-neutral-600 bg-neutral-900/95 text-center backdrop-blur`;
+    return `${LEAD_DAY_W} border-b border-r border-t border-neutral-600 bg-neutral-900/95 text-center backdrop-blur`;
   }
   if (columnId === "week") {
-    return `sticky ${LEAD_WEEK_LEFT} z-20 ${LEAD_WEEK_W} border-b border-r border-t border-neutral-600 bg-neutral-900/95 text-center backdrop-blur`;
+    return `${LEAD_WEEK_W} border-b border-r border-t border-neutral-600 bg-neutral-900/95 text-center backdrop-blur`;
   }
-  if (isUserHeader) {
-    return "border-b border-r border-t border-neutral-600 text-center";
-  }
-  return "border-b border-t border-neutral-600 text-center";
+  return "";
 }
 
-function cellStickyClass(columnId: string): string {
-  const isUserCell = columnId.startsWith("user-");
+function leadingBodyClass(columnId: string): string {
   if (columnId === "dateNum") {
-    return `sticky left-0 z-10 ${LEAD_DATE_W} border-b border-l border-r border-neutral-600 bg-neutral-900 text-center font-bold text-neutral-300 group-hover:bg-neutral-800`;
+    return `${LEAD_DATE_W} border-b border-l border-r border-neutral-600 bg-neutral-900 text-center font-bold text-neutral-300`;
   }
   if (columnId === "dayName") {
-    return `sticky left-8 z-10 ${LEAD_DAY_W} border-b border-r border-neutral-600 bg-neutral-900 text-center font-medium text-neutral-400 group-hover:bg-neutral-800`;
+    return `${LEAD_DAY_W} border-b border-r border-neutral-600 bg-neutral-900 text-center font-medium text-neutral-400`;
   }
   if (columnId === "week") {
-    return `sticky ${LEAD_WEEK_LEFT} z-10 ${LEAD_WEEK_W} border-b border-r border-neutral-600 bg-neutral-900 text-center font-medium text-neutral-400 group-hover:bg-neutral-800`;
+    return `${LEAD_WEEK_W} border-b border-r border-neutral-600 bg-neutral-900 text-center font-medium text-neutral-400`;
   }
-  if (isUserCell) {
+  return "";
+}
+
+function scrollHeaderClass(): string {
+  return "border-b border-r border-t border-neutral-600 text-center";
+}
+
+function scrollBodyClass(columnId: string): string {
+  if (columnId.startsWith("user-")) {
     return "border-b border-r border-neutral-600 text-center";
   }
   return "border-b border-neutral-600 text-center";
 }
 
+function syncHeights(source: HTMLElement | null, target: HTMLElement | null) {
+  if (!source || !target) {
+    return;
+  }
+  const height = source.getBoundingClientRect().height;
+  target.style.minHeight = `${height}px`;
+  target.style.height = `${height}px`;
+}
+
 type DashboardDataTableProps = {
   table: Table<DashboardRow>;
+  users: User[];
+  summaries: DashboardUserSummaries;
 };
 
-export function DashboardDataTable({ table }: DashboardDataTableProps) {
+export function DashboardDataTable({ table, users, summaries }: DashboardDataTableProps) {
   const userColumns = table
     .getAllLeafColumns()
     .filter((column) => column.id.startsWith("user-"));
   const hasNoUsers = userColumns.length === 0;
   const rows = table.getRowModel().rows;
+  const showTotHoursColumn = !hasNoUsers;
 
-  // Forces horizontal scroll on narrow viewports while letting user columns
-  // share the leftover width equally on wider screens. When users exist,
-  // the table is at least: 7rem (leading) + N × 12rem (per-user minimum).
-  // When there are no users, fall back to just the leading width.
-  const tableMinWidth = hasNoUsers
-    ? `${LEADING_TOTAL_REM}rem`
-    : `${LEADING_TOTAL_REM + userColumns.length * USER_MIN_REM}rem`;
+  const scrollMinWidth = hasNoUsers
+    ? `${USER_MIN_REM}rem`
+    : `${userColumns.length * USER_MIN_REM + (showTotHoursColumn ? TOT_HOURS_MIN_REM : 0)}rem`;
+
+  const [hoveredRowIndex, setHoveredRowIndex] = useState<number | null>(null);
+
+  const leadingHeaderRef = useRef<HTMLTableRowElement>(null);
+  const scrollHeaderRef = useRef<HTMLTableRowElement>(null);
+  const leadingRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+  const scrollRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+  const leadingFooterRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+  const scrollFooterRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+
+  const leadingHeaders =
+    table.getHeaderGroups()[0]?.headers.filter((h) => isLeadingColumn(h.column.id)) ?? [];
+
+  useLayoutEffect(() => {
+    const syncAll = () => {
+      syncHeights(scrollHeaderRef.current, leadingHeaderRef.current);
+
+      rows.forEach((_, index) => {
+        syncHeights(scrollRowRefs.current[index], leadingRowRefs.current[index]);
+      });
+
+      [0, 1].forEach((index) => {
+        syncHeights(scrollFooterRefs.current[index], leadingFooterRefs.current[index]);
+      });
+    };
+
+    syncAll();
+
+    const observer = new ResizeObserver(syncAll);
+    scrollRowRefs.current.forEach((row) => {
+      if (row) {
+        observer.observe(row);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [rows, users, summaries, showTotHoursColumn]);
+
+  const renderLeadingRow = (row: Row<DashboardRow>, index: number) => (
+    <tr
+      key={row.id}
+      ref={(el) => {
+        leadingRowRefs.current[index] = el;
+      }}
+      className={
+        hoveredRowIndex === index ? "bg-neutral-800/50" : undefined
+      }
+      onMouseEnter={() => setHoveredRowIndex(index)}
+      onMouseLeave={() => setHoveredRowIndex(null)}
+    >
+      {row
+        .getVisibleCells()
+        .filter((cell) => isLeadingColumn(cell.column.id))
+        .map((cell) => {
+          const id = cell.column.id;
+          return (
+            <td
+              key={cell.id}
+              className={`whitespace-nowrap px-1 py-2 align-middle ${leadingCellTypography(id)} ${leadingBodyClass(id)}`}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </td>
+          );
+        })}
+    </tr>
+  );
+
+  const renderScrollRow = (row: Row<DashboardRow>, rowIndex: number, index: number) => (
+    <tr
+      key={row.id}
+      ref={(el) => {
+        scrollRowRefs.current[index] = el;
+      }}
+      className={
+        hoveredRowIndex === index ? "bg-neutral-800/50" : undefined
+      }
+      onMouseEnter={() => setHoveredRowIndex(index)}
+      onMouseLeave={() => setHoveredRowIndex(null)}
+    >
+      {row
+        .getVisibleCells()
+        .filter((cell) => cell.column.id.startsWith("user-"))
+        .map((cell) => {
+          const id = cell.column.id;
+          return (
+            <td
+              key={cell.id}
+              className={`whitespace-normal p-0 align-middle text-sm ${scrollBodyClass(id)}`}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </td>
+          );
+        })}
+      {hasNoUsers && rowIndex === 0 ? (
+        <td
+          rowSpan={rows.length}
+          className="border-b border-r border-neutral-600 bg-neutral-900 px-6 align-middle text-center text-sm text-neutral-500"
+        >
+          No user found
+        </td>
+      ) : null}
+      {showTotHoursColumn ? (
+        <DashboardTotHoursCell
+          hours={summaries.dailyTotalHoursByDay.get(row.original.dateNum) ?? 0}
+        />
+      ) : null}
+    </tr>
+  );
 
   return (
     <main className="overflow-hidden border border-neutral-800 bg-neutral-900 shadow-2xl backdrop-blur-sm">
-      <div className="overflow-x-auto">
-        <table
-          className="w-full border-separate border-spacing-0 table-fixed caption-bottom text-center text-sm"
-          style={{ minWidth: tableMinWidth }}
+      <div className="flex w-full min-w-0">
+        {/* Fixed: #, Dy, Wk â€” no horizontal scrollbar underneath */}
+        <div
+          className="shrink-0"
+          style={{ width: `${LEADING_TOTAL_REM}rem` }}
         >
-          <colgroup>
-            <col className={LEAD_DATE_W} />
-            <col className={LEAD_DAY_W} />
-            <col className={LEAD_WEEK_W} />
-            {userColumns.map((column) => (
-              <col key={`col-${column.id}`} />
-            ))}
-            {hasNoUsers ? <col /> : null}
-          </colgroup>
-          <thead className="bg-neutral-950/50">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="hover:bg-transparent">
-                {headerGroup.headers.map((header) => {
+          <table className={TABLE_CLASS}>
+            <colgroup>
+              <col className={LEAD_DATE_W} />
+              <col className={LEAD_DAY_W} />
+              <col className={LEAD_WEEK_W} />
+            </colgroup>
+            <thead className="bg-neutral-950/50">
+              <tr ref={leadingHeaderRef} className="hover:bg-transparent">
+                {leadingHeaders.map((header) => {
                   const id = header.column.id;
-                  const stickyClass = headerStickyClass(id);
-                  const leadPad = isLeadingColumn(id) ? "px-1 py-2" : "px-6 py-4";
-                  const leadType = leadingCellTypography(id);
                   return (
                     <th
                       key={header.id}
-                      className={`h-10 whitespace-nowrap ${leadPad} align-middle text-center font-semibold text-neutral-300 ${leadType} ${stickyClass}`}
+                      className={`h-10 whitespace-nowrap px-1 py-2 align-middle font-semibold text-neutral-300 ${leadingCellTypography(id)} ${leadingHeaderClass(id)}`}
                     >
                       {header.isPlaceholder
                         ? null
@@ -114,49 +239,74 @@ export function DashboardDataTable({ table }: DashboardDataTableProps) {
                     </th>
                   );
                 })}
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child>td]:border-b-0">
+              {rows.map((row, index) => renderLeadingRow(row, index))}
+            </tbody>
+            {showTotHoursColumn ? (
+              <DashboardSummaryFooterLeading
+                users={users}
+                summaries={summaries}
+                rowRefs={leadingFooterRefs}
+              />
+            ) : null}
+          </table>
+        </div>
+
+        {/* Scrollable: users + TOT. HOURS */}
+        <div className="dashboard-table-scroll min-w-0 flex-1 overflow-x-auto">
+          <table className={TABLE_CLASS} style={{ minWidth: scrollMinWidth }}>
+            <colgroup>
+              {userColumns.map((column) => (
+                <col key={`col-${column.id}`} />
+              ))}
+              {hasNoUsers ? <col /> : null}
+              {showTotHoursColumn ? <col className={TOT_HOURS_W} /> : null}
+            </colgroup>
+            <thead className="bg-neutral-950/50">
+              <tr ref={scrollHeaderRef} className="hover:bg-transparent">
+                {userColumns.map((column) => {
+                  const header = table
+                    .getHeaderGroups()[0]
+                    ?.headers.find((h) => h.column.id === column.id);
+                  if (!header) {
+                    return null;
+                  }
+                  return (
+                    <th
+                      key={header.id}
+                      className={`h-10 whitespace-nowrap px-6 py-4 align-middle text-sm font-semibold text-neutral-300 ${scrollHeaderClass()}`}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  );
+                })}
                 {hasNoUsers ? (
                   <th
                     aria-hidden
                     className="h-10 border-b border-r border-t border-neutral-600"
                   />
                 ) : null}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="[&_tr:last-child>td]:border-b-0">
-            {rows.map((row, rowIndex) => (
-              <tr key={row.id} className="group transition-colors hover:bg-neutral-800/50">
-                {row.getVisibleCells().map((cell) => {
-                  const id = cell.column.id;
-                  const isUserCell = id.startsWith("user-");
-                  const stickyClass = cellStickyClass(id);
-                  const leadCellPad =
-                    isLeadingColumn(id) ? "whitespace-nowrap px-1 py-2" : null;
-                  const leadType = leadingCellTypography(id);
-                  const cellPad = isUserCell
-                    ? "whitespace-normal p-0"
-                    : leadCellPad ?? "whitespace-nowrap px-6 py-3";
-                  return (
-                    <td
-                      key={cell.id}
-                      className={`${cellPad} align-middle ${isLeadingColumn(id) ? "" : "text-sm"} ${leadType} ${stickyClass}`}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  );
-                })}
-                {hasNoUsers && rowIndex === 0 ? (
-                  <td
-                    rowSpan={rows.length}
-                    className="border-b border-r border-neutral-600 bg-neutral-900 px-6 align-middle text-center text-sm text-neutral-500"
-                  >
-                    No user found
-                  </td>
+                {showTotHoursColumn ? (
+                  <th className={TOT_HOURS_HEADER_CLASS}>
+                    <TotHoursHeaderLabel />
+                  </th>
                 ) : null}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="[&_tr:last-child>td]:border-b-0">
+              {rows.map((row, rowIndex) => renderScrollRow(row, rowIndex, rowIndex))}
+            </tbody>
+            {showTotHoursColumn ? (
+              <DashboardSummaryFooterScroll
+                users={users}
+                summaries={summaries}
+                rowRefs={scrollFooterRefs}
+              />
+            ) : null}
+          </table>
+        </div>
       </div>
     </main>
   );

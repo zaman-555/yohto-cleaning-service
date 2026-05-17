@@ -8,15 +8,15 @@ export const TRANSPORT_TYPES = [
 
 export const TRANSPORT_TYPE_META = {
   "own car": {
-    dotClass: "bg-emerald-400 ring-2 ring-emerald-400/35",
+    dotClass: "bg-emerald-400",
     label: "Own car",
   },
   "company car": {
-    dotClass: "bg-amber-400 ring-2 ring-amber-400/35",
+    dotClass: "bg-amber-400",
     label: "Company car",
   },
   "going with other": {
-    dotClass: "bg-violet-400 ring-2 ring-violet-400/35",
+    dotClass: "bg-violet-400",
     label: "Going with other",
   },
 } as const satisfies Record<TransportType, { dotClass: string; label: string }>;
@@ -30,7 +30,7 @@ export function transportTypeMeta(type: string): {
     return known;
   }
   return {
-    dotClass: "bg-neutral-500 ring-2 ring-neutral-500/30",
+    dotClass: "bg-neutral-500",
     label: type || "Transport",
   };
 }

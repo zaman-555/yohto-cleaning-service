@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CirclePlus, MapPin, Pencil } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import type { DashboardRow, TaskRecord, User } from "@/features/dashboard/types";
-import { Button } from "@/components/ui/button";
-import { TransportTypeDot } from "./transport-type-dot";
+import { DashboardTaskCell } from "./dashboard-task-cell";
 import { taskCellKey } from "./task-utils";
 
 type UseDashboardColumnsParams = {
@@ -73,61 +72,28 @@ export function useDashboardColumns({
 
           if (existing) {
             return (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-3 py-2 text-center">
-                <p className="w-full max-w-full text-base font-semibold leading-tight text-neutral-50">
-                  {existing.companyName}
-                </p>
-                <p className="line-clamp-3 w-full max-w-full text-sm leading-snug text-neutral-300">
-                  {existing.task}
-                </p>
-                <div className="flex max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 text-sm text-neutral-400">
-                  <span className="max-w-full font-medium text-neutral-400">
-                    {existing.carName}
-                  </span>
-                  <span aria-hidden className="text-neutral-600">
-                    ·
-                  </span>
-                  <TransportTypeDot transportType={existing.transportType} />
-                  <div className="ml-0.5 flex items-center gap-0 border-l border-neutral-700 pl-2">
-                    <a
-                      href={existing.location}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex rounded-md p-1 text-indigo-400 transition-colors hover:bg-neutral-800/80 hover:text-indigo-300"
-                      aria-label="Open location"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MapPin className="size-4" aria-hidden />
-                    </a>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-neutral-300 hover:!bg-neutral-800/80 hover:!text-neutral-50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditTaskDialog(currentUser.name, row.original, existing);
-                      }}
-                    >
-                      <Pencil className="size-3.5" aria-hidden />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <DashboardTaskCell
+                task={existing}
+                userName={currentUser.name}
+                row={row.original}
+                onEdit={() =>
+                  openEditTaskDialog(currentUser.name, row.original, existing)
+                }
+              />
             );
           }
 
           return (
             <button
               type="button"
-              className="flex h-full w-full items-center justify-center px-6 py-5 text-neutral-500 transition-colors"
+              className="flex h-full min-h-[5.5rem] w-full items-center justify-center text-neutral-500 transition-colors hover:text-indigo-200"
               aria-label={`Add task for ${currentUser.name}`}
+              onClick={() =>
+                openTaskDialog(currentUser.id, currentUser.name, row.original)
+              }
             >
               <CirclePlus
-                onClick={() =>
-                  openTaskDialog(currentUser.id, currentUser.name, row.original)
-                }
-                className="h-5 w-5 shrink-0 text-neutral-500 transition-colors hover:text-indigo-200"
+                className="h-5 w-5 shrink-0"
                 strokeWidth={1.5}
                 aria-hidden
               />

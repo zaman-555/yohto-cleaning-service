@@ -12,18 +12,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TimeRangePicker } from "./time-range-picker";
 import { TRANSPORT_TYPE_META, TRANSPORT_TYPES } from "./transport-constants";
+import type { TimeRange } from "./task-utils";
 import type { SelectedTaskUserState } from "./types";
 
-type TaskFormState = Omit<TaskInput, "userId" | "timestamp">;
+type TaskFormState = Omit<TaskInput, "userId" | "date" | "shift">;
 
 type TaskDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingTaskId: number | null;
   selectedTaskUser: SelectedTaskUserState | null;
-  taskTime: string;
-  onTaskTimeChange: (value: string) => void;
+  taskShift: TimeRange;
+  onTaskShiftChange: (value: TimeRange) => void;
   taskForm: TaskFormState;
   onTaskFormChange: (updater: (prev: TaskFormState) => TaskFormState) => void;
   taskSubmitError: string | null;
@@ -36,8 +38,8 @@ export function TaskDialog({
   onOpenChange,
   editingTaskId,
   selectedTaskUser,
-  taskTime,
-  onTaskTimeChange,
+  taskShift,
+  onTaskShiftChange,
   taskForm,
   onTaskFormChange,
   taskSubmitError,
@@ -74,17 +76,12 @@ export function TaskDialog({
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="taskTime">Time</Label>
-            <Input
-              id="taskTime"
-              type="time"
-              required
-              value={taskTime}
-              onChange={(e) => onTaskTimeChange(e.target.value)}
-              className="border-neutral-700 bg-neutral-800/60 text-neutral-100"
-            />
-          </div>
+          <TimeRangePicker
+            idPrefix="task-shift"
+            value={taskShift}
+            onChange={onTaskShiftChange}
+            disabled={isSubmittingTask}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="companyName">Company Name</Label>

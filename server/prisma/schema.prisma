@@ -21,7 +21,8 @@ model User {
 
 model Task {
   id            Int      @id @default(autoincrement())
-  timestamp     DateTime
+  date          DateTime @db.Date
+  shift         String
   userId        Int
   companyName   String
   task          String
@@ -33,7 +34,7 @@ model Task {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([timestamp])
+  @@index([date])
   @@map("task")
 }
 

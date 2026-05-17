@@ -38,7 +38,8 @@ export type TeamMember = {
 export type TransportType = "own car" | "company car" | "going with other";
 
 export type TaskInput = {
-  timestamp: string;
+  date: string;
+  shift: string;
   userId: number;
   companyName: string;
   task: string;
@@ -49,7 +50,8 @@ export type TaskInput = {
 
 /** PATCH /api/tasks/:id body (user unchanged). */
 export type TaskUpdateBody = {
-  timestamp: string;
+  date: string;
+  shift: string;
   companyName: string;
   task: string;
   carName: string;
@@ -57,10 +59,11 @@ export type TaskUpdateBody = {
   location: string;
 };
 
-/** Task row from GET /api/tasks (ISO timestamp string after JSON). */
+/** Task row from GET /api/tasks (ISO date string after JSON). */
 export type TaskRecord = {
   id: number;
-  timestamp: string;
+  date: string;
+  shift: string;
   userId: number;
   companyName: string;
   task: string;

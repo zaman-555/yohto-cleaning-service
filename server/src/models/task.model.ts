@@ -2,7 +2,8 @@ import prisma from '../config/database';
 
 const taskListSelect = {
   id: true,
-  timestamp: true,
+  date: true,
+  shift: true,
   userId: true,
   companyName: true,
   task: true,
@@ -12,8 +13,8 @@ const taskListSelect = {
 } as const;
 
 export function monthRange(year: number, month: number) {
-  const rangeStart = new Date(year, month - 1, 1, 0, 0, 0, 0);
-  const rangeEnd = new Date(year, month, 1, 0, 0, 0, 0);
+  const rangeStart = new Date(Date.UTC(year, month - 1, 1));
+  const rangeEnd = new Date(Date.UTC(year, month, 1));
   return { rangeStart, rangeEnd };
 }
 
@@ -21,18 +22,19 @@ export async function findTasksInMonth(year: number, month: number) {
   const { rangeStart, rangeEnd } = monthRange(year, month);
   return prisma.task.findMany({
     where: {
-      timestamp: {
+      date: {
         gte: rangeStart,
         lt: rangeEnd,
       },
     },
-    orderBy: { timestamp: 'desc' },
+    orderBy: { date: 'desc' },
     select: taskListSelect,
   });
 }
 
 export async function createTask(input: {
-  timestamp: Date;
+  date: Date;
+  shift: string;
   userId: number;
   companyName: string;
   task: string;
@@ -42,7 +44,8 @@ export async function createTask(input: {
 }) {
   return prisma.task.create({
     data: {
-      timestamp: input.timestamp,
+      date: input.date,
+      shift: input.shift,
       userId: input.userId,
       companyName: input.companyName,
       task: input.task,
@@ -63,7 +66,8 @@ export async function findTaskById(id: number) {
 export async function updateTaskById(
   id: number,
   data: {
-    timestamp: Date;
+    date: Date;
+    shift: string;
     companyName: string;
     task: string;
     carName: string;

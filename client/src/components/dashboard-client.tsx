@@ -15,13 +15,16 @@ import { DashboardDataTable } from "./dashboard/dashboard-data-table";
 import { DashboardHeader } from "./dashboard/dashboard-header";
 import { TaskDialog } from "./dashboard/task-dialog";
 import {
-  combineDateAndTime,
-  getDefaultTimeLocal,
-  localTimeFromIso,
+  calendarDateIso,
+  DEFAULT_SHIFT_RANGE,
+  formatShift,
+  parseShift,
   tasksByUserAndDay,
+  type TimeRange,
 } from "./dashboard/task-utils";
 import { TRANSPORT_TYPES } from "./dashboard/transport-constants";
 import type { DashboardClientProps, SelectedTaskUserState } from "./dashboard/types";
+import { computeDashboardUserSummaries } from "@/features/dashboard/dashboard-summary";
 import { useDashboardColumns } from "./dashboard/use-dashboard-columns";
 
 export default function DashboardClient({
@@ -44,9 +47,9 @@ export default function DashboardClient({
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const router = useRouter();
 
-  const [taskTime, setTaskTime] = useState(getDefaultTimeLocal);
+  const [taskShift, setTaskShift] = useState<TimeRange>(DEFAULT_SHIFT_RANGE);
   const [taskForm, setTaskForm] = useState<
-    Omit<TaskInput, "userId" | "timestamp">
+    Omit<TaskInput, "userId" | "date" | "shift">
   >({
     companyName: "",
     task: "",
@@ -56,6 +59,14 @@ export default function DashboardClient({
   });
 
   const taskLookup = useMemo(() => tasksByUserAndDay(initialTasks), [initialTasks]);
+
+  const calendarYear = initialData[0]?.calendarYear ?? new Date().getFullYear();
+  const calendarMonth = initialData[0]?.calendarMonth ?? new Date().getMonth() + 1;
+
+  const summaries = useMemo(
+    () => computeDashboardUserSummaries(initialTasks, users, calendarYear, calendarMonth),
+    [initialTasks, users, calendarYear, calendarMonth]
+  );
 
   const openTaskDialog = useCallback(
     (selectedUserId: number, selectedUserName: string, row: DashboardRow) => {
@@ -75,7 +86,7 @@ export default function DashboardClient({
         calendarMonth: row.calendarMonth,
         dayOfMonth: row.dateNum,
       });
-      setTaskTime(getDefaultTimeLocal());
+      setTaskShift(DEFAULT_SHIFT_RANGE);
       setTaskForm({
         companyName: "",
         task: "",
@@ -107,7 +118,7 @@ export default function DashboardClient({
         calendarMonth: row.calendarMonth,
         dayOfMonth: row.dateNum,
       });
-      setTaskTime(localTimeFromIso(record.timestamp));
+      setTaskShift(parseShift(record.shift) ?? DEFAULT_SHIFT_RANGE);
       setTaskForm({
         companyName: record.companyName,
         task: record.task,
@@ -221,20 +232,20 @@ export default function DashboardClient({
     setIsSubmittingTask(true);
     setTaskSubmitError(null);
 
-    const at = combineDateAndTime(
-      selectedTaskUser.calendarYear,
-      selectedTaskUser.calendarMonth,
-      selectedTaskUser.dayOfMonth,
-      taskTime
-    );
-    if (!at) {
-      setTaskSubmitError("Please enter a valid time.");
+    const shift = formatShift(taskShift);
+    if (!parseShift(shift)) {
+      setTaskSubmitError("Please enter a valid shift time range.");
       setIsSubmittingTask(false);
       return;
     }
 
     const body = {
-      timestamp: at.toISOString(),
+      date: calendarDateIso(
+        selectedTaskUser.calendarYear,
+        selectedTaskUser.calendarMonth,
+        selectedTaskUser.dayOfMonth
+      ),
+      shift,
       companyName: taskForm.companyName,
       task: taskForm.task,
       carName: taskForm.carName,
@@ -286,7 +297,7 @@ export default function DashboardClient({
           onLogout={handleLogout}
         />
 
-        <DashboardDataTable table={table} />
+        <DashboardDataTable table={table} users={users} summaries={summaries} />
 
         <TaskDialog
           open={isTaskDialogOpen}
@@ -298,8 +309,8 @@ export default function DashboardClient({
           }}
           editingTaskId={editingTaskId}
           selectedTaskUser={selectedTaskUser}
-          taskTime={taskTime}
-          onTaskTimeChange={setTaskTime}
+          taskShift={taskShift}
+          onTaskShiftChange={setTaskShift}
           taskForm={taskForm}
           onTaskFormChange={setTaskForm}
           taskSubmitError={taskSubmitError}
