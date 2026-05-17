@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { WeeklyWeekPagination } from "@/components/dashboard/weekly-week-pagination";
 import { useDashboardShell } from "@/components/dashboard/use-dashboard-shell";
 import { WeeklyCellDialog } from "@/components/dashboard/weekly-cell-dialog";
 import { WeeklyTaskDetailCell } from "@/components/dashboard/weekly-task-detail-cell";
@@ -26,6 +27,7 @@ import type { TeamMember, User } from "@/features/dashboard/types";
 export type WeeklyShowcaseClientProps = {
   year: number;
   weekNumber: number;
+  weekRangeLabel: string | null;
   initialTeamMembers: TeamMember[];
   users: User[];
   initialRows: WeeklyShowcaseRow[];
@@ -41,6 +43,7 @@ type CellEditTarget = {
 export default function WeeklyShowcaseClient({
   year,
   weekNumber,
+  weekRangeLabel,
   initialTeamMembers,
   users,
   initialRows,
@@ -58,11 +61,15 @@ export default function WeeklyShowcaseClient({
   useEffect(() => {
     setLocalRows((prev) => {
       const incoming = structuredClone(initialRows);
+      const weekRowPrefix = `${year}-w${weekNumber}-`;
       const incomingIds = new Set(incoming.map((r) => r.id));
-      const extras = prev.filter((r) => !incomingIds.has(r.id));
-      return [...incoming, ...extras];
+      // Keep only unsynced rows for the *current* week (e.g. locally added before refresh).
+      const localExtras = prev.filter(
+        (r) => r.id.startsWith(weekRowPrefix) && !incomingIds.has(r.id)
+      );
+      return [...incoming, ...localExtras];
     });
-  }, [initialRows]);
+  }, [initialRows, year, weekNumber]);
 
   const {
     user,
@@ -183,8 +190,14 @@ export default function WeeklyShowcaseClient({
           onToggleApproval={toggleApproval}
           onLogout={handleLogout}
           title="Weekly showcase"
-          subtitle={`Calendar week ${weekNumber} (${year}).`}
+          subtitle={
+            weekRangeLabel
+              ? `Calendar week ${weekNumber}, ${year} (${weekRangeLabel})`
+              : `Calendar week ${weekNumber}, ${year}`
+          }
         />
+
+        <WeeklyWeekPagination year={year} weekNumber={weekNumber} />
 
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -212,7 +225,7 @@ export default function WeeklyShowcaseClient({
 
         <main className="overflow-hidden border border-neutral-800 bg-neutral-900 shadow-2xl backdrop-blur-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[56rem] border-separate border-spacing-0 text-left text-sm">
+            <table className="w-full min-w-[68rem] border-separate border-spacing-0 text-center text-sm">
               <thead className="bg-neutral-950/50">
                 <tr>
                   {WEEKLY_SHOWCASE_COLUMNS.map((col, i) => (
@@ -220,8 +233,8 @@ export default function WeeklyShowcaseClient({
                       key={col.key}
                       className={
                         i === 0
-                          ? "border-b border-l border-r border-t border-neutral-600 px-3 py-3 font-semibold text-neutral-300"
-                          : "border-b border-r border-t border-neutral-600 px-3 py-3 font-semibold text-neutral-300"
+                          ? "border-b border-l border-r border-t border-neutral-600 px-3 py-3 text-center font-semibold leading-snug text-neutral-300"
+                          : "border-b border-r border-t border-neutral-600 px-3 py-3 text-center font-semibold leading-snug text-neutral-300"
                       }
                     >
                       {col.label}
@@ -249,11 +262,6 @@ export default function WeeklyShowcaseClient({
                         <td key={col.key} className={col.tdClass}>
                           <WeeklyTaskDetailCell
                             detail={row[col.key]}
-                            className={
-                              col.key === "maxTimeHoursInclusiveOfDriving"
-                                ? "items-center text-center"
-                                : undefined
-                            }
                             onOpenEdit={() =>
                               openCellDialog(
                                 {

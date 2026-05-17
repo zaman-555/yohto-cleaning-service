@@ -1,12 +1,14 @@
 import type { DashboardRow, User } from "./types";
 import { getCalendarWeekNumber } from "./week-utils";
 
-export const generateTableData = (users: User[]): DashboardRow[] => {
+export const generateTableData = (
+  users: User[],
+  year: number,
+  month: number
+): DashboardRow[] => {
   const data: DashboardRow[] = [];
-  const now = new Date();
-  const year = now.getFullYear();
-  const monthIndex = now.getMonth();
-  const calendarMonth = monthIndex + 1;
+  const monthIndex = month - 1;
+  const calendarMonth = month;
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
   for (let day = 1; day <= daysInMonth; day++) {

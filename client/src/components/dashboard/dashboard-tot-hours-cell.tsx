@@ -1,31 +1,49 @@
 import { formatSummaryHours } from "@/features/dashboard/dashboard-summary";
 import { cn } from "@/lib/utils";
-
-const TOT_HOURS_CELL_CLASS =
-  "bg-indigo-950 px-1 py-2.5 text-center text-sm font-semibold tabular-nums text-white border-b border-indigo-900/80";
+import {
+  TOT_COLUMN_BODY_CLASS,
+  TOT_COLUMN_FOOTER_CLASS,
+  TOT_COLUMN_HEADER_CLASS,
+} from "./dashboard-summary-theme";
 
 type DashboardTotHoursCellProps = {
   hours: number;
+  variant?: "body" | "footer";
   className?: string;
 };
 
-export function DashboardTotHoursCell({ hours, className }: DashboardTotHoursCellProps) {
+export function DashboardTotHoursCell({
+  hours,
+  variant = "body",
+  className,
+}: DashboardTotHoursCellProps) {
+  const isFooter = variant === "footer";
+
   return (
-    <td className={cn(TOT_HOURS_CELL_CLASS, "border-r border-indigo-900/80", className)}>
+    <td
+      className={cn(
+        "border-b border-neutral-600",
+        isFooter ? TOT_COLUMN_FOOTER_CLASS : TOT_COLUMN_BODY_CLASS,
+        !isFooter && "border-r border-neutral-600",
+        className
+      )}
+    >
       {formatSummaryHours(hours)}
     </td>
   );
 }
 
 export const TOT_HOURS_HEADER_CLASS = cn(
-  TOT_HOURS_CELL_CLASS,
-  "h-10 border-t border-r border-indigo-900/80 align-middle text-[10px] leading-tight tracking-wide"
+  TOT_COLUMN_HEADER_CLASS,
+  "border-r border-neutral-600"
 );
 
 export function TotHoursHeaderLabel() {
   return (
-    <span className="mx-auto block w-full text-center font-semibold uppercase">
-      TOT. HOURS
+    <span className="mx-auto block max-w-full leading-tight">
+      Tot.
+      <br />
+      hours
     </span>
   );
 }

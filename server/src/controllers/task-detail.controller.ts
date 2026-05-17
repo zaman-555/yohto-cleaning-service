@@ -31,23 +31,39 @@ function serialize(row: {
 
 export async function getTaskDetails(req: Request, res: Response): Promise<void> {
   const year = Number(req.query.year);
+  const weekParam = req.query.week;
   const minWeek = Number(req.query.minWeek);
   const maxWeek = Number(req.query.maxWeek);
 
-  if (
-    !Number.isFinite(year) ||
-    !Number.isFinite(minWeek) ||
-    !Number.isFinite(maxWeek) ||
-    minWeek < 1 ||
-    maxWeek > 53 ||
-    minWeek > maxWeek
-  ) {
-    res.status(400).json({ error: 'Valid year, minWeek, and maxWeek are required' });
+  if (!Number.isFinite(year)) {
+    res.status(400).json({ error: 'Valid year is required' });
     return;
   }
 
   try {
-    const rows = await taskDetailModel.findTaskDetailsByYearWeekRange(year, minWeek, maxWeek);
+    let rows;
+    if (weekParam !== undefined && weekParam !== '') {
+      const week = Number(weekParam);
+      if (!Number.isFinite(week) || week < 1 || week > 53) {
+        res.status(400).json({ error: 'Valid week (1–53) is required' });
+        return;
+      }
+      rows = await taskDetailModel.findTaskDetailsByYearWeek(year, week);
+    } else if (
+      Number.isFinite(minWeek) &&
+      Number.isFinite(maxWeek) &&
+      minWeek >= 1 &&
+      maxWeek <= 53 &&
+      minWeek <= maxWeek
+    ) {
+      rows = await taskDetailModel.findTaskDetailsByYearWeekRange(year, minWeek, maxWeek);
+    } else {
+      res.status(400).json({
+        error: 'Provide week, or minWeek and maxWeek',
+      });
+      return;
+    }
+
     res.json(rows.map(serialize));
   } catch (error) {
     console.error('Error fetching task details:', error);

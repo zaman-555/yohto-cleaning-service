@@ -1,9 +1,11 @@
 /** Allowed `columnKey` values for `task_details` (must match client weekly columns). */
 export const WEEKLY_TASK_DETAIL_COLUMN_KEYS = [
+  'title',
   'weekdayDate',
   'customer',
   'pointOfBusiness',
   'keysSandra',
+  'alarmSandra',
   'instructions',
   'specialEquipmentDetergent',
   'maxTimeHoursInclusiveOfDriving',

@@ -53,14 +53,14 @@ export async function fetchTasksForMonth(year: number, month: number): Promise<T
   }
 }
 
-export async function fetchTaskDetailsForWeeks(
+/** Fetch task_details for a single calendar week only. */
+export async function fetchTaskDetailsForWeek(
   year: number,
-  minWeek: number,
-  maxWeek: number
+  week: number
 ): Promise<TaskDetailRecord[]> {
   try {
     const response = await fetch(
-      serverApiUrl(`/api/task-details?year=${year}&minWeek=${minWeek}&maxWeek=${maxWeek}`),
+      serverApiUrl(`/api/task-details?year=${year}&week=${week}`),
       { cache: "no-store" }
     );
 

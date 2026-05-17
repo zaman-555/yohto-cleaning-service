@@ -19,10 +19,12 @@ export function createBlankWeeklyRow(
   const id = `${year}-w${week}-${rowSuffix}`;
   return {
     id,
+    title: cell(id, "title"),
     weekdayDate: cell(id, "weekdayDate"),
     customer: cell(id, "customer"),
     pointOfBusiness: cell(id, "pointOfBusiness"),
     keysSandra: cell(id, "keysSandra"),
+    alarmSandra: cell(id, "alarmSandra"),
     instructions: cell(id, "instructions"),
     specialEquipmentDetergent: cell(id, "specialEquipmentDetergent"),
     maxTimeHoursInclusiveOfDriving: cell(id, "maxTimeHoursInclusiveOfDriving"),

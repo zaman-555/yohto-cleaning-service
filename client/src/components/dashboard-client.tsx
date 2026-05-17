@@ -13,6 +13,7 @@ import type {
 } from "@/features/dashboard/types";
 import { DashboardDataTable } from "./dashboard/dashboard-data-table";
 import { DashboardHeader } from "./dashboard/dashboard-header";
+import { MonthlyMonthPagination } from "./dashboard/monthly-month-pagination";
 import { TaskDialog } from "./dashboard/task-dialog";
 import {
   calendarDateIso,
@@ -28,6 +29,9 @@ import { computeDashboardUserSummaries } from "@/features/dashboard/dashboard-su
 import { useDashboardColumns } from "./dashboard/use-dashboard-columns";
 
 export default function DashboardClient({
+  year,
+  monthNumber,
+  monthLabel,
   initialData,
   initialTeamMembers,
   users,
@@ -60,8 +64,8 @@ export default function DashboardClient({
 
   const taskLookup = useMemo(() => tasksByUserAndDay(initialTasks), [initialTasks]);
 
-  const calendarYear = initialData[0]?.calendarYear ?? new Date().getFullYear();
-  const calendarMonth = initialData[0]?.calendarMonth ?? new Date().getMonth() + 1;
+  const calendarYear = year;
+  const calendarMonth = monthNumber;
 
   const summaries = useMemo(
     () => computeDashboardUserSummaries(initialTasks, users, calendarYear, calendarMonth),
@@ -295,7 +299,10 @@ export default function DashboardClient({
           pendingApprovalIds={pendingApprovalIds}
           onToggleApproval={toggleApproval}
           onLogout={handleLogout}
+          subtitle={`Manage your team's availability and schedule for ${monthLabel}.`}
         />
+
+        <MonthlyMonthPagination year={year} monthNumber={monthNumber} />
 
         <DashboardDataTable table={table} users={users} summaries={summaries} />
 

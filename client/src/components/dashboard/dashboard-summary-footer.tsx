@@ -6,21 +6,19 @@ import {
 import type { User } from "@/features/dashboard/types";
 import { DashboardTotHoursCell } from "./dashboard-tot-hours-cell";
 import { LEADING_COLUMN_COUNT, LEADING_TOTAL_REM } from "./dashboard-table-layout";
+import {
+  SUMMARY_FOOTER_LABEL_CLASS,
+  SUMMARY_FOOTER_ROW_CLASS,
+  SUMMARY_FOOTER_ROW_FIRST_CLASS,
+  SUMMARY_FOOTER_VALUE_CLASS,
+} from "./dashboard-summary-theme";
+import { cn } from "@/lib/utils";
 
 type DashboardSummaryFooterProps = {
   users: User[];
   summaries: DashboardUserSummaries;
   rowRefs?: MutableRefObject<(HTMLTableRowElement | null)[]>;
 };
-
-const FOOTER_ROW_CLASS =
-  "bg-indigo-950 text-white hover:bg-indigo-950 [&>td]:border-b [&>td]:border-indigo-900/80";
-
-const LABEL_CELL_CLASS =
-  "border-r border-indigo-900/80 bg-indigo-950 px-2 py-2.5 text-left text-xs font-semibold whitespace-nowrap";
-
-const VALUE_CELL_CLASS =
-  "border-r border-indigo-900/80 px-2 py-2.5 text-center text-sm font-semibold tabular-nums whitespace-nowrap";
 
 type SummaryFooterRowProps = {
   label: string;
@@ -31,16 +29,25 @@ type SummaryFooterRowProps = {
 
 function SummaryFooterLeadingRow({
   label,
+  isFirst,
   rowRef,
 }: {
   label: string;
+  isFirst?: boolean;
   rowRef?: (el: HTMLTableRowElement | null) => void;
 }) {
   return (
-    <tr ref={rowRef} className={FOOTER_ROW_CLASS}>
+    <tr
+      ref={rowRef}
+      className={cn(
+        SUMMARY_FOOTER_ROW_CLASS,
+        isFirst && SUMMARY_FOOTER_ROW_FIRST_CLASS,
+        "[&>td]:border-b [&>td]:border-neutral-600"
+      )}
+    >
       <td
         colSpan={LEADING_COLUMN_COUNT}
-        className={LABEL_CELL_CLASS}
+        className={SUMMARY_FOOTER_LABEL_CLASS}
         style={{
           width: `${LEADING_TOTAL_REM}rem`,
           minWidth: `${LEADING_TOTAL_REM}rem`,
@@ -57,18 +64,27 @@ function SummaryFooterScrollRow({
   users,
   valuesByUserId,
   totalHours,
+  isFirst,
   rowRef,
 }: Omit<SummaryFooterRowProps, "label"> & {
+  isFirst?: boolean;
   rowRef?: (el: HTMLTableRowElement | null) => void;
 }) {
   return (
-    <tr ref={rowRef} className={FOOTER_ROW_CLASS}>
+    <tr
+      ref={rowRef}
+      className={cn(
+        SUMMARY_FOOTER_ROW_CLASS,
+        isFirst && SUMMARY_FOOTER_ROW_FIRST_CLASS,
+        "[&>td]:border-b [&>td]:border-neutral-600"
+      )}
+    >
       {users.map((user) => (
-        <td key={user.id} className={VALUE_CELL_CLASS}>
+        <td key={user.id} className={SUMMARY_FOOTER_VALUE_CLASS}>
           {formatSummaryHours(valuesByUserId.get(user.id) ?? 0)}
         </td>
       ))}
-      <DashboardTotHoursCell hours={totalHours} />
+      <DashboardTotHoursCell hours={totalHours} variant="footer" />
     </tr>
   );
 }
@@ -86,6 +102,7 @@ export function DashboardSummaryFooterLeading({
     <tfoot>
       <SummaryFooterLeadingRow
         label="SUM h/month"
+        isFirst
         rowRef={(el) => {
           if (rowRefs) rowRefs.current[0] = el;
         }}
@@ -115,6 +132,7 @@ export function DashboardSummaryFooterScroll({
         users={users}
         valuesByUserId={summaries.monthlySumByUserId}
         totalHours={summaries.grandMonthlyTotalHours}
+        isFirst
         rowRef={(el) => {
           if (rowRefs) rowRefs.current[0] = el;
         }}

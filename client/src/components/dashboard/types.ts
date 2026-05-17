@@ -6,6 +6,9 @@ import type {
 } from "@/features/dashboard/types";
 
 export type DashboardClientProps = {
+  year: number;
+  monthNumber: number;
+  monthLabel: string;
   initialData: DashboardRow[];
   initialTeamMembers: TeamMember[];
   users: User[];
