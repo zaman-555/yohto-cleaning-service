@@ -1,6 +1,7 @@
 "use server";
 
 import { serverApiUrl } from "@/env";
+import { getServerAuthHeaders } from "@/lib/auth/server";
 import type {
   TaskDetailRecord,
   WeeklyShowcaseColumnKey,
@@ -9,9 +10,10 @@ import type { TaskInput, TaskUpdateBody } from "./types";
 
 export async function updateUserApproval(userId: number, isApproved: boolean): Promise<boolean> {
   try {
+    const authHeaders = await getServerAuthHeaders();
     const response = await fetch(serverApiUrl(`/api/users/${userId}/approval`), {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({ isApproved }),
       cache: "no-store",
     });
@@ -29,9 +31,10 @@ export type CreateTaskResult = {
 
 export async function createTask(payload: TaskInput): Promise<CreateTaskResult> {
   try {
+    const authHeaders = await getServerAuthHeaders();
     const response = await fetch(serverApiUrl("/api/tasks"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -49,9 +52,10 @@ export async function createTask(payload: TaskInput): Promise<CreateTaskResult> 
 
 export async function updateTask(taskId: number, payload: TaskUpdateBody): Promise<CreateTaskResult> {
   try {
+    const authHeaders = await getServerAuthHeaders();
     const response = await fetch(serverApiUrl(`/api/tasks/${taskId}`), {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -80,9 +84,10 @@ export async function upsertWeeklyTaskDetail(input: {
   weekdayLabelForDate: string;
 }): Promise<UpsertWeeklyTaskDetailResult> {
   try {
+    const authHeaders = await getServerAuthHeaders();
     const response = await fetch(serverApiUrl("/api/task-details/upsert"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify(input),
       cache: "no-store",
     });

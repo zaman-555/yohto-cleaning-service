@@ -8,6 +8,7 @@ import { taskCellKey } from "./task-utils";
 type UseDashboardColumnsParams = {
   users: User[];
   taskLookup: Map<string, TaskRecord>;
+  canManageTasks: boolean;
   openTaskDialog: (
     selectedUserId: number,
     selectedUserName: string,
@@ -23,6 +24,7 @@ type UseDashboardColumnsParams = {
 export function useDashboardColumns({
   users,
   taskLookup,
+  canManageTasks,
   openTaskDialog,
   openEditTaskDialog,
 }: UseDashboardColumnsParams): ColumnDef<DashboardRow>[] {
@@ -76,11 +78,16 @@ export function useDashboardColumns({
                 task={existing}
                 userName={currentUser.name}
                 row={row.original}
+                canEdit={canManageTasks}
                 onEdit={() =>
                   openEditTaskDialog(currentUser.name, row.original, existing)
                 }
               />
             );
+          }
+
+          if (!canManageTasks) {
+            return null;
           }
 
           return (
@@ -102,6 +109,6 @@ export function useDashboardColumns({
         },
       })),
     ],
-    [users, openTaskDialog, openEditTaskDialog, taskLookup]
+    [users, canManageTasks, openTaskDialog, openEditTaskDialog, taskLookup]
   );
 }

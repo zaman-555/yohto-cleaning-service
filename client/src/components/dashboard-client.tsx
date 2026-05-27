@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { extractUrlFromRichText, isRichTextEmpty } from "@/lib/rich-text";
 import { createTask, updateTask, updateUserApproval } from "@/features/dashboard/actions";
+import { clearAuthUser, clearServerSession, getAuthUser } from "@/lib/auth/client";
 import type {
   CurrentUser,
   DashboardRow,
@@ -138,13 +139,12 @@ export default function DashboardClient({
   );
 
   useEffect(() => {
-    const storedUserStr = localStorage.getItem("user");
-    if (!storedUserStr) {
+    const storedUser = getAuthUser();
+    if (!storedUser) {
       router.push("/login");
       return;
     }
 
-    const storedUser = JSON.parse(storedUserStr) as CurrentUser;
     setUser(storedUser);
     setLoading(false);
   }, [router]);
@@ -160,6 +160,7 @@ export default function DashboardClient({
   const columns = useDashboardColumns({
     users,
     taskLookup,
+    canManageTasks: Boolean(user?.isAdmin),
     openTaskDialog,
     openEditTaskDialog,
   });
@@ -224,8 +225,11 @@ export default function DashboardClient({
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await clearServerSession();
+    clearAuthUser();
+    router.push("/login");
+    router.refresh();
   };
 
   const handleTaskSubmit = async (event: FormEvent<HTMLFormElement>) => {

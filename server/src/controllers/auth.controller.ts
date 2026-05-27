@@ -1,5 +1,55 @@
 import type { Request, Response } from 'express';
+import { authConfig } from '../config/auth';
+import * as refreshTokenModel from '../models/refresh-token.model';
 import * as userModel from '../models/user.model';
+import { sha256 } from '../services/crypto.service';
+import { hashPassword, isBcryptHash, verifyPassword } from '../services/password.service';
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../services/token.service';
+
+function publicUser(user: {
+  id: number;
+  name: string;
+  email: string;
+  isApproved: boolean;
+  isAdmin: boolean;
+}) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    isApproved: user.isApproved,
+    isAdmin: user.isAdmin,
+  };
+}
+
+function refreshTokenExpiryDate(): Date {
+  return new Date(Date.now() + authConfig.refreshTokenTtlSeconds * 1000);
+}
+
+async function issueAuthTokens(user: {
+  id: number;
+  email: string;
+  name: string;
+  isApproved: boolean;
+  isAdmin: boolean;
+}) {
+  const accessToken = signAccessToken({
+    sub: user.id,
+    email: user.email,
+    name: user.name,
+    isApproved: user.isApproved,
+    isAdmin: user.isAdmin,
+  });
+
+  const refreshToken = signRefreshToken(user.id);
+  await refreshTokenModel.createRefreshToken({
+    userId: user.id,
+    tokenHash: sha256(refreshToken),
+    expiresAt: refreshTokenExpiryDate(),
+  });
+
+  return { accessToken, refreshToken };
+}
 
 export async function register(req: Request, res: Response): Promise<void> {
   const { name, email, password } = req.body as {
@@ -10,6 +60,11 @@ export async function register(req: Request, res: Response): Promise<void> {
 
   if (!name || !email || !password) {
     res.status(400).json({ error: 'Name, email, and password are required' });
+    return;
+  }
+
+  if (password.length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters' });
     return;
   }
 
@@ -24,13 +79,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 
     res.status(201).json({
       message: 'User registered successfully',
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        isApproved: newUser.isApproved,
-        isAdmin: newUser.isAdmin,
-      },
+      user: publicUser(newUser),
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -49,23 +98,113 @@ export async function login(req: Request, res: Response): Promise<void> {
   try {
     const user = await userModel.findUserByEmail(email);
 
-    if (!user || user.password !== password) {
+    if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
 
+    const passwordValid = await verifyPassword(password, user.password);
+    if (!passwordValid) {
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    if (!isBcryptHash(user.password)) {
+      const passwordHash = await hashPassword(password);
+      await userModel.updateUserPassword(user.id, passwordHash);
+    }
+
+    const userPublic = publicUser(user);
+
+    if (!user.isApproved) {
+      res.status(200).json({
+        message: 'Account pending approval',
+        user: userPublic,
+      });
+      return;
+    }
+
+    const { accessToken, refreshToken } = await issueAuthTokens(user);
+
     res.status(200).json({
       message: 'Login successful',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        isApproved: user.isApproved,
-        isAdmin: user.isAdmin,
-      },
+      user: userPublic,
+      token: accessToken,
+      refreshToken,
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+}
+
+export async function refresh(req: Request, res: Response): Promise<void> {
+  const { refreshToken } = req.body as { refreshToken?: string };
+
+  if (!refreshToken) {
+    res.status(400).json({ error: 'Refresh token is required' });
+    return;
+  }
+
+  try {
+    const payload = verifyRefreshToken(refreshToken);
+    const storedToken = await refreshTokenModel.findActiveRefreshTokenByHash(sha256(refreshToken));
+
+    if (!storedToken || storedToken.userId !== payload.sub) {
+      res.status(401).json({ error: 'Invalid refresh token' });
+      return;
+    }
+
+    const user = await userModel.findUserById(payload.sub);
+    if (!user || !user.isApproved) {
+      res.status(401).json({ error: 'Invalid refresh token' });
+      return;
+    }
+
+    const accessToken = signAccessToken({
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      isApproved: user.isApproved,
+      isAdmin: user.isAdmin,
+    });
+
+    res.status(200).json({
+      token: accessToken,
+      refreshToken,
+      user: publicUser(user),
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+}
+
+export async function logout(req: Request, res: Response): Promise<void> {
+  const { refreshToken } = req.body as { refreshToken?: string };
+
+  if (!refreshToken) {
+    res.status(200).json({ message: 'Logged out' });
+    return;
+  }
+
+  try {
+    const storedToken = await refreshTokenModel.findActiveRefreshTokenByHash(sha256(refreshToken));
+    if (storedToken) {
+      await refreshTokenModel.revokeRefreshToken(storedToken.id);
+    }
+  } catch (error) {
+    console.error('Logout token revoke error:', error);
+  }
+
+  res.status(200).json({ message: 'Logged out' });
+}
+
+export async function me(req: Request, res: Response): Promise<void> {
+  if (!req.authUser) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  res.status(200).json({ user: publicUser(req.authUser) });
 }

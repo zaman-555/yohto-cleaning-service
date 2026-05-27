@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { publicApiUrl } from "@/env";
+import { clearAuthUser, establishServerSession, saveAuthUser } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,11 +57,29 @@ export default function Login() {
       }
 
       if (!data.user.isApproved) {
+        clearAuthUser();
         router.push("/pending");
-      } else {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        router.push("/");
+        return;
       }
+
+      if (!data.token || typeof data.token !== "string") {
+        setError("Login succeeded but no session token was returned.");
+        return;
+      }
+      if (!data.refreshToken || typeof data.refreshToken !== "string") {
+        setError("Login succeeded but no refresh token was returned.");
+        return;
+      }
+
+      const sessionOk = await establishServerSession(data.token, data.refreshToken);
+      if (!sessionOk) {
+        setError("Could not establish a secure session. Please try again.");
+        return;
+      }
+
+      saveAuthUser(data.user);
+      router.push("/");
+      router.refresh();
     } catch {
       setError("An error occurred. Please try again.");
     }

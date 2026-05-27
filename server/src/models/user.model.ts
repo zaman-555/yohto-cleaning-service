@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import { hashPassword } from '../services/password.service';
 
 const userListSelect = {
   id: true,
@@ -13,19 +14,31 @@ export async function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
 }
 
+export async function findUserById(id: number) {
+  return prisma.user.findUnique({ where: { id } });
+}
+
 export async function createUser(input: {
   name: string;
   email: string;
   password: string;
 }) {
+  const passwordHash = await hashPassword(input.password);
   return prisma.user.create({
     data: {
       name: input.name,
       email: input.email,
-      password: input.password,
+      password: passwordHash,
       isApproved: false,
     },
-  }); 
+  });
+}
+
+export async function updateUserPassword(id: number, passwordHash: string) {
+  return prisma.user.update({
+    where: { id },
+    data: { password: passwordHash },
+  });
 }
 
 export async function listUsers(approvedFilter: boolean | undefined) {

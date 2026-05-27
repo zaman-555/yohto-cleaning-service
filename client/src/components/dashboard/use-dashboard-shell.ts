@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateUserApproval } from "@/features/dashboard/actions";
+import { clearAuthUser, clearServerSession, getAuthUser } from "@/lib/auth/client";
 import type { CurrentUser, TeamMember, User } from "@/features/dashboard/types";
 
 export function useDashboardShell(
@@ -16,13 +17,12 @@ export function useDashboardShell(
   const router = useRouter();
 
   useEffect(() => {
-    const storedUserStr = localStorage.getItem("user");
-    if (!storedUserStr) {
+    const storedUser = getAuthUser();
+    if (!storedUser) {
       router.push("/login");
       return;
     }
 
-    const storedUser = JSON.parse(storedUserStr) as CurrentUser;
     setUser(storedUser);
     setLoading(false);
   }, [router]);
@@ -86,9 +86,12 @@ export function useDashboardShell(
     [pendingApprovalIds, router]
   );
 
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem("user");
-  }, []);
+  const handleLogout = useCallback(async () => {
+    await clearServerSession();
+    clearAuthUser();
+    router.push("/login");
+    router.refresh();
+  }, [router]);
 
   return {
     user,

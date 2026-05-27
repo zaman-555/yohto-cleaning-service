@@ -17,6 +17,7 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   tasks      Task[]
+  refreshTokens RefreshToken[]
 }
 
 model Task {
@@ -50,4 +51,19 @@ model TaskDetail {
 
   @@unique([rowKey, columnKey], map: "task_details_rowKey_columnKey_key")
   @@map("task_details")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { hashPassword } from '../src/services/password.service';
 
 const prisma = new PrismaClient();
 
@@ -23,15 +24,16 @@ async function main() {
     return;
   }
 
-  // Create admin user
+  const passwordHash = await hashPassword(adminPassword);
+
   const admin = await prisma.user.create({
     data: {
       name: 'System Admin',
       email: adminEmail,
-      password: adminPassword, // In a real app, ensure this is hashed
+      password: passwordHash,
       isApproved: true,
       isAdmin: true,
-    }
+    },
   });
 
   console.log('Admin user created successfully:');

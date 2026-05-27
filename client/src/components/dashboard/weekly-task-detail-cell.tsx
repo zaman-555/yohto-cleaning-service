@@ -7,6 +7,7 @@ import type { TaskDetail } from "@/features/dashboard/weekly-showcase-types";
 type WeeklyTaskDetailCellProps = {
   detail: TaskDetail;
   className?: string;
+  canEdit?: boolean;
   onOpenEdit: () => void;
 };
 
@@ -17,11 +18,25 @@ function cellHasData(detail: TaskDetail): boolean {
 export function WeeklyTaskDetailCell({
   detail,
   className,
+  canEdit = true,
   onOpenEdit,
 }: WeeklyTaskDetailCellProps) {
   const hasData = cellHasData(detail);
 
   if (!hasData) {
+    if (!canEdit) {
+      return (
+        <div
+          className={cn(
+            "group/cell flex min-h-[4.5rem] w-full items-center justify-center p-3 text-neutral-600",
+            className
+          )}
+        >
+          —
+        </div>
+      );
+    }
+
     return (
       <div
         className={cn(
@@ -60,22 +75,24 @@ export function WeeklyTaskDetailCell({
         className="w-full text-center text-sm leading-relaxed text-neutral-100"
       />
 
-      <button
-        type="button"
-        className={cn(
-          "absolute right-1.5 top-1.5 rounded-md p-1 text-neutral-500 transition-colors",
-          "opacity-60 hover:bg-neutral-800/90 hover:text-indigo-300",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80",
-          "group-hover/cell:opacity-100"
-        )}
-        aria-label="Update cell"
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpenEdit();
-        }}
-      >
-        <Pencil className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
-      </button>
+      {canEdit ? (
+        <button
+          type="button"
+          className={cn(
+            "absolute right-1.5 top-1.5 rounded-md p-1 text-neutral-500 transition-colors",
+            "opacity-60 hover:bg-neutral-800/90 hover:text-indigo-300",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80",
+            "group-hover/cell:opacity-100"
+          )}
+          aria-label="Update cell"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenEdit();
+          }}
+        >
+          <Pencil className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+        </button>
+      ) : null}
     </div>
   );
 }

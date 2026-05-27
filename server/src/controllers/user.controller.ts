@@ -7,6 +7,11 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
     const approvedFilter =
       approvedQuery === 'true' ? true : approvedQuery === 'false' ? false : undefined;
 
+    if (approvedFilter === undefined && !req.authUser?.isAdmin) {
+      res.status(403).json({ error: 'Admin access required to list all users' });
+      return;
+    }
+
     const users = await userModel.listUsers(approvedFilter);
     res.json(users);
   } catch (error) {

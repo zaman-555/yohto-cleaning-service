@@ -119,12 +119,11 @@ export function DashboardHeader({
           </div>
         )}
         <Button
-          asChild
           variant="ghost"
           className="text-neutral-400 hover:bg-neutral-800 hover:text-white"
-          onClick={onLogout}
+          onClick={() => void onLogout()}
         >
-          <Link href="/login">Log Out</Link>
+          Log Out
         </Button>
       </div>
       <h1 className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">

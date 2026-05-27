@@ -82,9 +82,10 @@ export default function WeeklyShowcaseClient({
   } = useDashboardShell(initialTeamMembers, users);
 
   const rows = localRows;
+  const canManageWeeklyRows = Boolean(user?.isAdmin);
 
   const canAddRow =
-    rows.length > 0 && weeklyRowHasAnyData(rows[rows.length - 1]);
+    canManageWeeklyRows && rows.length > 0 && weeklyRowHasAnyData(rows[rows.length - 1]);
 
   const addLocalRow = useCallback(() => {
     setLocalRows((prev) => {
@@ -219,7 +220,11 @@ export default function WeeklyShowcaseClient({
             <Plus className="mr-1.5 size-4" aria-hidden />
             Add row
           </Button>
-          {!canAddRow && rows.length > 0 ? (
+          {!canManageWeeklyRows ? (
+            <span className="text-xs text-neutral-500">
+              Only admins can add rows.
+            </span>
+          ) : !canAddRow && rows.length > 0 ? (
             <span className="text-xs text-neutral-500">
               Fill at least one cell in the bottom row to add another.
             </span>
@@ -265,6 +270,7 @@ export default function WeeklyShowcaseClient({
                         <td key={col.key} className={col.tdClass}>
                           <WeeklyTaskDetailCell
                             detail={row[col.key]}
+                            canEdit={canManageWeeklyRows}
                             onOpenEdit={() =>
                               openCellDialog(
                                 {
