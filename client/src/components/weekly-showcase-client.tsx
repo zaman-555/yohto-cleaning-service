@@ -11,6 +11,7 @@ import { WeeklyCellDialog } from "@/components/dashboard/weekly-cell-dialog";
 import { WeeklyTaskDetailCell } from "@/components/dashboard/weekly-task-detail-cell";
 import { normalizeWeekdaySelection } from "@/components/dashboard/weekly-weekday-picker";
 import { Button } from "@/components/ui/button";
+import { isRichTextEmpty } from "@/lib/rich-text";
 import { upsertWeeklyTaskDetail } from "@/features/dashboard/actions";
 import {
   maxRowSuffixForWeek,
@@ -124,10 +125,12 @@ export default function WeeklyShowcaseClient({
       event.preventDefault();
       if (!cellTarget) return;
 
-      const trimmed = cellText.trim();
-      if (!trimmed) {
+      const isWeekdayColumn = cellTarget.column === "weekdayDate";
+      const textToSave = isWeekdayColumn ? cellText.trim() : cellText;
+
+      if (isWeekdayColumn ? !textToSave : isRichTextEmpty(textToSave)) {
         setCellError(
-          cellTarget.column === "weekdayDate"
+          isWeekdayColumn
             ? "Please select a day of the week."
             : "Please enter text for this cell."
         );
@@ -136,8 +139,8 @@ export default function WeeklyShowcaseClient({
 
       const row = localRows.find((r) => r.id === cellTarget.rowId);
       const weekdayLabel =
-        cellTarget.column === "weekdayDate"
-          ? trimmed
+        isWeekdayColumn
+          ? textToSave
           : (() => {
               const t = row?.weekdayDate.text?.trim() ?? "";
               if (!t || t === "—") return "";
@@ -152,7 +155,7 @@ export default function WeeklyShowcaseClient({
         weekNumber: cellTarget.weekNumber,
         rowKey: cellTarget.rowId,
         columnKey: cellTarget.column,
-        text: trimmed,
+        text: textToSave,
         weekdayLabelForDate: weekdayLabel,
       });
 

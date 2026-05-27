@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { extractUrlFromRichText, isRichTextEmpty } from "@/lib/rich-text";
 import { createTask, updateTask, updateUserApproval } from "@/features/dashboard/actions";
 import type {
   CurrentUser,
@@ -239,6 +240,18 @@ export default function DashboardClient({
     const shift = formatShift(taskShift);
     if (!parseShift(shift)) {
       setTaskSubmitError("Please enter a valid shift time range.");
+      setIsSubmittingTask(false);
+      return;
+    }
+
+    if (isRichTextEmpty(taskForm.task)) {
+      setTaskSubmitError("Please enter a task description.");
+      setIsSubmittingTask(false);
+      return;
+    }
+
+    if (isRichTextEmpty(taskForm.location) || !extractUrlFromRichText(taskForm.location)) {
+      setTaskSubmitError("Location must include a valid URL.");
       setIsSubmittingTask(false);
       return;
     }

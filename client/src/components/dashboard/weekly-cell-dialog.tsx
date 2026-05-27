@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { RichTextEditorLazy } from "@/components/ui/rich-text-editor-lazy";
 import { WEEKDAY_PICKER_OPTIONS } from "./weekly-weekday-picker";
 
 export type WeeklyCellDialogInputVariant = "text" | "weekday";
@@ -91,14 +92,15 @@ export function WeeklyCellDialog({
           ) : (
             <div className="space-y-2">
               <Label htmlFor="weekly-cell-text">Text</Label>
-              <textarea
-                id="weekly-cell-text"
-                required
-                value={textValue}
-                onChange={(e) => onTextChange(e.target.value)}
-                placeholder="Enter details for this cell"
-                className="min-h-24 w-full rounded-lg border border-neutral-700 bg-neutral-800/60 px-2.5 py-2 text-sm text-neutral-100 outline-none placeholder:text-neutral-500 focus-visible:border-indigo-400 focus-visible:ring-3 focus-visible:ring-indigo-500/30"
-              />
+              {open ? (
+                <RichTextEditorLazy
+                  id="weekly-cell-text"
+                  value={textValue}
+                  onChange={onTextChange}
+                  placeholder="Enter details for this cell"
+                  disabled={isSubmitting}
+                />
+              ) : null}
             </div>
           )}
 

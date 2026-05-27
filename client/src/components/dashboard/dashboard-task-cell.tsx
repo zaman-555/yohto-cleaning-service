@@ -1,4 +1,6 @@
 import { MapPin, Pencil } from "lucide-react";
+import { RichTextContent } from "@/components/ui/rich-text-content";
+import { extractUrlFromRichText, looksLikeHtml } from "@/lib/rich-text";
 import type { DashboardRow, TaskRecord } from "@/features/dashboard/types";
 import { TransportTypeDot } from "./transport-type-dot";
 import { formatShiftLabel } from "./task-utils";
@@ -16,6 +18,8 @@ export function DashboardTaskCell({
   row,
   onEdit,
 }: DashboardTaskCellProps) {
+  const locationHref = extractUrlFromRichText(task.location);
+
   return (
     <div
       className="group/cell flex h-full w-full min-h-[5.5rem] min-w-0 flex-col px-2.5 py-2"
@@ -46,27 +50,34 @@ export function DashboardTaskCell({
         <p className="w-full break-all text-base font-semibold leading-snug text-neutral-50">
           {task.companyName}
         </p>
-        <p className="w-full break-all text-sm leading-snug text-neutral-300">
-          {task.task}
-        </p>
+        <RichTextContent
+          html={task.task}
+          className="w-full text-sm leading-snug text-neutral-300"
+        />
         <p className="w-full break-all text-sm font-medium leading-snug text-neutral-400">
           {task.carName}
         </p>
       </div>
 
-      <div className="mt-1.5 flex justify-start border-t border-neutral-800/80 pt-1.5">
-        <a
-          href={task.location}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-1 rounded-md text-xs text-indigo-400 transition-colors hover:text-indigo-300"
-          aria-label="Open location"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MapPin className="size-3.5 shrink-0" aria-hidden />
-          <span>Location</span>
-        </a>
-      </div>
+      {locationHref ? (
+        <div className="mt-1.5 flex justify-start border-t border-neutral-800/80 pt-1.5">
+          <a
+            href={locationHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex max-w-full items-center gap-1 rounded-md text-xs text-indigo-400 transition-colors hover:text-indigo-300"
+            aria-label="Open location"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MapPin className="size-3.5 shrink-0" aria-hidden />
+            {looksLikeHtml(task.location) ? (
+              <RichTextContent html={task.location} inline className="text-xs" />
+            ) : (
+              <span className="truncate">Location</span>
+            )}
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }

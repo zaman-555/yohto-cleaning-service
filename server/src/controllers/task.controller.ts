@@ -3,6 +3,7 @@ import { isValidTransportType } from '../constants/task';
 import { isValidTaskShift, normalizeTaskShift } from '../constants/task-shift';
 import * as taskModel from '../models/task.model';
 import * as userModel from '../models/user.model';
+import { extractUrlFromLocation, isLocationFieldEmpty } from '../utils/location-url';
 
 function formatDateOnly(date: Date): string {
   const y = date.getUTCFullYear();
@@ -89,11 +90,13 @@ function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
     return { error: 'Shift must be a valid time range (HH:mm-HH:mm)' as const };
   }
 
-  let parsedLocation: URL;
-  try {
-    parsedLocation = new URL(location);
-  } catch {
-    return { error: 'Location must be a valid URL' as const };
+  const locationTrimmed = location.trim();
+  if (isLocationFieldEmpty(locationTrimmed)) {
+    return { error: 'All task fields are required' as const };
+  }
+
+  if (!extractUrlFromLocation(locationTrimmed)) {
+    return { error: 'Location must include a valid URL' as const };
   }
 
   const parsedDate = parseDateOnly(date);
@@ -110,7 +113,7 @@ function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
       task: task.trim(),
       carName: carName.trim(),
       transportType,
-      location: parsedLocation.toString(),
+      location: locationTrimmed,
     },
   };
 }

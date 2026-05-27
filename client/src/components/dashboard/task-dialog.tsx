@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RichTextEditorLazy } from "@/components/ui/rich-text-editor-lazy";
 import { TimeRangePicker } from "./time-range-picker";
 import { TRANSPORT_TYPE_META, TRANSPORT_TYPES } from "./transport-constants";
 import type { TimeRange } from "./task-utils";
@@ -98,15 +99,17 @@ export function TaskDialog({
 
           <div className="space-y-2">
             <Label htmlFor="taskText">Task</Label>
-            <textarea
-              id="taskText"
-              required
-              value={taskForm.task}
-              onChange={(e) =>
-                onTaskFormChange((prev) => ({ ...prev, task: e.target.value }))
-              }
-              className="min-h-24 w-full rounded-lg border border-neutral-700 bg-neutral-800/60 px-2.5 py-2 text-sm text-neutral-100 outline-none focus-visible:border-indigo-400 focus-visible:ring-3 focus-visible:ring-indigo-500/30"
-            />
+            {open ? (
+              <RichTextEditorLazy
+                id="taskText"
+                value={taskForm.task}
+                onChange={(task) =>
+                  onTaskFormChange((prev) => ({ ...prev, task }))
+                }
+                placeholder="Describe the task"
+                disabled={isSubmittingTask}
+              />
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -158,17 +161,20 @@ export function TaskDialog({
 
           <div className="space-y-2">
             <Label htmlFor="location">Location URL</Label>
-            <Input
-              id="location"
-              type="url"
-              placeholder="https://example.com/location"
-              required
-              value={taskForm.location}
-              onChange={(e) =>
-                onTaskFormChange((prev) => ({ ...prev, location: e.target.value }))
-              }
-              className="border-neutral-700 bg-neutral-800/60 text-neutral-100 placeholder:text-neutral-500"
-            />
+            {open ? (
+              <RichTextEditorLazy
+                id="location"
+                value={taskForm.location}
+                onChange={(location) =>
+                  onTaskFormChange((prev) => ({ ...prev, location }))
+                }
+                placeholder="https://example.com/location"
+                disabled={isSubmittingTask}
+              />
+            ) : null}
+            <p className="text-xs text-neutral-500">
+              Enter a URL or use the link tool; formatting and colors are saved with the task.
+            </p>
           </div>
 
           {taskSubmitError ? (

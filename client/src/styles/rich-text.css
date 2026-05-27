@@ -1,0 +1,174 @@
+/* Rich text (Quill) — editor shell, display, typography, preset colors */
+
+.rich-text-editor .ql-toolbar.ql-snow {
+  border-color: rgb(64 64 64);
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  background: rgb(23 23 23);
+}
+
+.rich-text-editor .ql-container.ql-snow {
+  border-color: rgb(64 64 64);
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  background: rgb(38 38 38 / 0.6);
+  color: rgb(245 245 245);
+  font-family: inherit;
+  min-height: 6rem;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 6rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Tailwind preflight resets headings — restore in editor + display */
+:is(.rich-text-editor .ql-editor, .rich-text-content) :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.3;
+  margin-block: 0.35em;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) h4 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) h6 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) :is(strong, b) {
+  font-weight: 700;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) :is(em, i) {
+  font-style: italic;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) p {
+  margin-block: 0.25em;
+}
+
+.rich-text-content {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.rich-text-content a {
+  color: rgb(129 140 248);
+  text-decoration: underline;
+}
+
+.rich-text-content :is(ol, ul) {
+  padding-left: 1.25rem;
+}
+
+.rich-text-content ol {
+  list-style-type: decimal;
+}
+
+.rich-text-content ul {
+  list-style-type: disc;
+}
+
+/* Quill preset swatches */
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-color-white {
+  color: #fff;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-color-red {
+  color: #e60000;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-color-orange {
+  color: #f90;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-color-yellow {
+  color: #ff0;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-color-green {
+  color: #008a00;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-color-blue {
+  color: #06c;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-color-purple {
+  color: #93f;
+}
+
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-bg-black {
+  background-color: #000;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-bg-red {
+  background-color: #e60000;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-bg-orange {
+  background-color: #f90;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-bg-yellow {
+  background-color: #ff0;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-bg-green {
+  background-color: #008a00;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-bg-blue {
+  background-color: #06c;
+}
+:is(.rich-text-editor .ql-editor, .rich-text-content) .ql-bg-purple {
+  background-color: #93f;
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  color: rgb(115 115 115);
+  font-style: normal;
+}
+
+.rich-text-editor .ql-snow .ql-stroke {
+  stroke: rgb(163 163 163);
+}
+
+.rich-text-editor .ql-snow .ql-fill {
+  fill: rgb(163 163 163);
+}
+
+.rich-text-editor .ql-snow .ql-picker {
+  color: rgb(212 212 212);
+}
+
+.rich-text-editor .ql-snow .ql-picker-options {
+  background: rgb(23 23 23);
+  border-color: rgb(64 64 64);
+}
+
+.rich-text-editor .ql-snow .ql-picker.ql-color-picker .ql-picker-options,
+.rich-text-editor .ql-snow .ql-picker.ql-background-picker .ql-picker-options {
+  padding: 4px;
+}
+
+.rich-text-editor[data-disabled] .ql-toolbar,
+.rich-text-editor[data-disabled] .ql-container {
+  opacity: 0.6;
+  pointer-events: none;
+}

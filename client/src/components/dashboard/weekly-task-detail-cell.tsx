@@ -1,5 +1,7 @@
 import { CirclePlus, Pencil } from "lucide-react";
+import { RichTextContent } from "@/components/ui/rich-text-content";
 import { cn } from "@/lib/utils";
+import { hasRichTextContent } from "@/lib/rich-text";
 import type { TaskDetail } from "@/features/dashboard/weekly-showcase-types";
 
 type WeeklyTaskDetailCellProps = {
@@ -9,8 +11,7 @@ type WeeklyTaskDetailCellProps = {
 };
 
 function cellHasData(detail: TaskDetail): boolean {
-  const t = detail.text?.trim() ?? "";
-  return Boolean(t) && t !== "—";
+  return hasRichTextContent(detail.text);
 }
 
 export function WeeklyTaskDetailCell({
@@ -54,9 +55,10 @@ export function WeeklyTaskDetailCell({
         className
       )}
     >
-      <span className="w-full text-center text-sm font-medium leading-relaxed whitespace-pre-wrap break-words text-neutral-100">
-        {detail.text}
-      </span>
+      <RichTextContent
+        html={detail.text}
+        className="w-full text-center text-sm leading-relaxed text-neutral-100"
+      />
 
       <button
         type="button"

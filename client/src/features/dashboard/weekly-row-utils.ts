@@ -1,10 +1,10 @@
+import { hasRichTextContent } from "@/lib/rich-text";
 import { WEEKLY_SHOWCASE_COLUMNS, type WeeklyShowcaseRow } from "./weekly-showcase-types";
 
 /** True if any column has user text (not empty and not the placeholder em dash). */
 export function weeklyRowHasAnyData(row: WeeklyShowcaseRow): boolean {
   for (const { key } of WEEKLY_SHOWCASE_COLUMNS) {
-    const t = row[key].text?.trim() ?? "";
-    if (t && t !== "—") {
+    if (hasRichTextContent(row[key].text)) {
       return true;
     }
   }
