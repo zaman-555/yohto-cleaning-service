@@ -14,32 +14,6 @@ function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-function resolveBrowserReachableBaseUrl(baseUrl: string): string {
-  if (typeof window === "undefined") {
-    return baseUrl;
-  }
-
-  try {
-    const parsed = new URL(baseUrl);
-    const isLocalHost = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
-    if (!isLocalHost) {
-      return baseUrl;
-    }
-
-    const browserHost = window.location.hostname;
-    const browserIsNotLocal =
-      browserHost !== "localhost" && browserHost !== "127.0.0.1";
-    if (!browserIsNotLocal) {
-      return baseUrl;
-    }
-
-    parsed.hostname = browserHost;
-    return parsed.toString().replace(/\/$/, "");
-  } catch {
-    return baseUrl;
-  }
-}
-
 function parseRawEnv() {
   const result = rawEnvSchema.safeParse({
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -71,11 +45,10 @@ function getRawEnv() {
 function resolvePublicApiBaseUrl(): string {
   const raw = getRawEnv();
   if (raw.NEXT_PUBLIC_API_BASE_URL) {
-    const normalized = stripTrailingSlash(raw.NEXT_PUBLIC_API_BASE_URL);
-    return resolveBrowserReachableBaseUrl(normalized);
+    return stripTrailingSlash(raw.NEXT_PUBLIC_API_BASE_URL);
   }
   if (!isProd) {
-    return resolveBrowserReachableBaseUrl(DEV_DEFAULT_API_BASE);
+    return DEV_DEFAULT_API_BASE;
   }
   throw new Error(
     "NEXT_PUBLIC_API_BASE_URL must be set in production (browser API requests)."

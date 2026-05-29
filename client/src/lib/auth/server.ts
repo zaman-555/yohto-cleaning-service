@@ -85,7 +85,8 @@ export async function getServerAuthUser(): Promise<AuthUser | null> {
       return null;
     }
 
-    return (await response.json()) as AuthUser;
+    const data = (await response.json().catch(() => null)) as { user?: AuthUser } | null;
+    return data?.user ?? null;
   } catch {
     return null;
   }

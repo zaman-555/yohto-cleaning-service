@@ -22,10 +22,27 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
 
 export async function updateApproval(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
-  const { isApproved } = req.body as { isApproved?: boolean };
+  const { isApproved } = req.body as { isApproved?: unknown };
+
+  const userId = Number(id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    res.status(400).json({ error: 'Invalid user id' });
+    return;
+  }
+
+  if (typeof isApproved !== 'boolean') {
+    res.status(400).json({ error: 'isApproved must be a boolean' });
+    return;
+  }
 
   try {
-    const user = await userModel.updateUserApproval(Number(id), isApproved as boolean);
+    const exists = await userModel.userExistsById(userId);
+    if (!exists) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const user = await userModel.updateUserApproval(userId, isApproved);
     res.json({ message: 'User approval updated', user });
   } catch (error) {
     console.error('Error updating user:', error);

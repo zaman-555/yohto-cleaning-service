@@ -48,6 +48,10 @@ async function issueAuthTokens(user: {
     expiresAt: refreshTokenExpiryDate(),
   });
 
+  void refreshTokenModel
+    .deleteExpiredRefreshTokens()
+    .catch((error) => console.error('Refresh token cleanup error:', error));
+
   return { accessToken, refreshToken };
 }
 

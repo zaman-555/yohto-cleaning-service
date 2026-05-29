@@ -31,3 +31,19 @@ export async function revokeRefreshToken(id: string) {
   });
 }
 
+export async function revokeAllRefreshTokensForUser(userId: number) {
+  return prisma.refreshToken.updateMany({
+    where: { userId, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+}
+
+/** Best-effort removal of tokens that can no longer be used (expired or revoked). */
+export async function deleteExpiredRefreshTokens() {
+  return prisma.refreshToken.deleteMany({
+    where: {
+      OR: [{ expiresAt: { lt: new Date() } }, { NOT: { revokedAt: null } }],
+    },
+  });
+}
+

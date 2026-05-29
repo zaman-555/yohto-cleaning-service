@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../config/auth';
 
+const JWT_ALGORITHM: jwt.Algorithm = 'HS256';
+const VERIFY_OPTIONS: jwt.VerifyOptions = { algorithms: [JWT_ALGORITHM] };
+
 export type AccessTokenPayload = {
   sub: number;
   email: string;
@@ -19,7 +22,10 @@ export function signAccessToken(user: AccessTokenPayload): string {
       isAdmin: user.isAdmin,
     },
     authConfig.jwtSecret,
-    { expiresIn: authConfig.accessTokenExpiresIn as jwt.SignOptions['expiresIn'] }
+    {
+      algorithm: JWT_ALGORITHM,
+      expiresIn: authConfig.accessTokenExpiresIn as jwt.SignOptions['expiresIn'],
+    }
   );
 }
 
@@ -35,12 +41,15 @@ export function signRefreshToken(userId: number): string {
       type: 'refresh',
     },
     authConfig.jwtSecret,
-    { expiresIn: authConfig.refreshTokenExpiresIn as jwt.SignOptions['expiresIn'] }
+    {
+      algorithm: JWT_ALGORITHM,
+      expiresIn: authConfig.refreshTokenExpiresIn as jwt.SignOptions['expiresIn'],
+    }
   );
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
-  const decoded = jwt.verify(token, authConfig.jwtSecret);
+  const decoded = jwt.verify(token, authConfig.jwtSecret, VERIFY_OPTIONS);
   if (typeof decoded !== 'object' || decoded === null) {
     throw new jwt.JsonWebTokenError('Invalid token payload');
   }
@@ -61,7 +70,7 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
 }
 
 export function verifyRefreshToken(token: string): RefreshTokenPayload {
-  const decoded = jwt.verify(token, authConfig.jwtSecret);
+  const decoded = jwt.verify(token, authConfig.jwtSecret, VERIFY_OPTIONS);
   if (typeof decoded !== 'object' || decoded === null) {
     throw new jwt.JsonWebTokenError('Invalid refresh token payload');
   }
