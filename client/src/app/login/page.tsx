@@ -144,6 +144,15 @@ export default function Login() {
               )}
             />
 
+            <div className="text-right -mt-2">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <Button
               type="submit"
               size="lg"

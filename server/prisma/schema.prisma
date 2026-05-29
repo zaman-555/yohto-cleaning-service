@@ -18,6 +18,7 @@ model User {
   updatedAt  DateTime @updatedAt
   tasks      Task[]
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Task {
@@ -66,4 +67,19 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    Int
+  tokenHash String    @unique
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }

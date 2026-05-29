@@ -1,8 +1,11 @@
 import type { Request, Response } from 'express';
 import { authConfig } from '../config/auth';
+import { emailConfig } from '../config/email';
+import * as passwordResetTokenModel from '../models/password-reset-token.model';
 import * as refreshTokenModel from '../models/refresh-token.model';
 import * as userModel from '../models/user.model';
-import { sha256 } from '../services/crypto.service';
+import { randomToken, sha256 } from '../services/crypto.service';
+import { sendPasswordResetEmail } from '../services/email.service';
 import { hashPassword, isBcryptHash, verifyPassword } from '../services/password.service';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../services/token.service';
 
@@ -25,6 +28,14 @@ function publicUser(user: {
 function refreshTokenExpiryDate(): Date {
   return new Date(Date.now() + authConfig.refreshTokenTtlSeconds * 1000);
 }
+
+function passwordResetExpiryDate(): Date {
+  return new Date(Date.now() + authConfig.passwordResetTtlSeconds * 1000);
+}
+
+// Same response whether or not the account exists, to avoid leaking which emails are registered.
+const FORGOT_PASSWORD_GENERIC_MESSAGE =
+  'If an account exists for that email, a password reset link has been sent.';
 
 async function issueAuthTokens(user: {
   id: number;
@@ -202,6 +213,89 @@ export async function logout(req: Request, res: Response): Promise<void> {
   }
 
   res.status(200).json({ message: 'Logged out' });
+}
+
+export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  const { email } = req.body as { email?: string };
+
+  if (!email || typeof email !== 'string') {
+    res.status(400).json({ error: 'Email is required' });
+    return;
+  }
+
+  try {
+    const user = await userModel.findUserByEmail(email);
+
+    if (user) {
+      // Invalidate any outstanding reset tokens before issuing a fresh one.
+      await passwordResetTokenModel.markAllPasswordResetTokensUsedForUser(user.id);
+
+      const token = randomToken();
+      await passwordResetTokenModel.createPasswordResetToken({
+        userId: user.id,
+        tokenHash: sha256(token),
+        expiresAt: passwordResetExpiryDate(),
+      });
+
+      const resetUrl = `${emailConfig.clientBaseUrl}/reset-password?token=${token}`;
+      const expiryMinutes = Math.round(authConfig.passwordResetTtlSeconds / 60);
+
+      try {
+        await sendPasswordResetEmail({
+          to: user.email,
+          name: user.name,
+          resetUrl,
+          expiryMinutes,
+        });
+      } catch (mailError) {
+        // Don't surface delivery failures to the caller (avoids enumeration); log for ops.
+        console.error('Password reset email error:', mailError);
+      }
+    }
+
+    void passwordResetTokenModel
+      .deleteExpiredPasswordResetTokens()
+      .catch((error) => console.error('Password reset token cleanup error:', error));
+
+    res.status(200).json({ message: FORGOT_PASSWORD_GENERIC_MESSAGE });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(200).json({ message: FORGOT_PASSWORD_GENERIC_MESSAGE });
+  }
+}
+
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  const { token, password } = req.body as { token?: string; password?: string };
+
+  if (!token || !password) {
+    res.status(400).json({ error: 'Token and password are required' });
+    return;
+  }
+
+  if (password.length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters' });
+    return;
+  }
+
+  try {
+    const stored = await passwordResetTokenModel.findActivePasswordResetTokenByHash(sha256(token));
+    if (!stored) {
+      res.status(400).json({ error: 'This reset link is invalid or has expired' });
+      return;
+    }
+
+    const passwordHash = await hashPassword(password);
+    await userModel.updateUserPassword(stored.userId, passwordHash);
+    await passwordResetTokenModel.markPasswordResetTokenUsed(stored.id);
+
+    // A password change should invalidate all existing sessions.
+    await refreshTokenModel.revokeAllRefreshTokensForUser(stored.userId);
+
+    res.status(200).json({ message: 'Password has been reset. You can now sign in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 export async function me(req: Request, res: Response): Promise<void> {
