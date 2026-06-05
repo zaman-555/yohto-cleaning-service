@@ -75,9 +75,9 @@ export function DashboardHeader({
                         className="flex items-center justify-between focus:!bg-neutral-800/70 focus:!text-neutral-100 focus:**:!text-current"
                         onSelect={(e) => e.preventDefault()}
                       >
-                        <div className="flex flex-col pr-4">
-                          <span className="font-medium">{member.name}</span>
-                          <span className="text-xs text-neutral-500">{member.email}</span>
+                        <div className="flex min-w-0 flex-1 flex-col pr-4">
+                          <span className="truncate font-medium">{member.name}</span>
+                          <span className="truncate text-xs text-neutral-500">{member.email}</span>
                         </div>
                         <Toggle
                           pressed={member.isApproved}
@@ -87,8 +87,8 @@ export function DashboardHeader({
                           }
                           className={
                             member.isApproved
-                              ? "min-w-24 justify-center !bg-emerald-500 !text-white hover:!bg-emerald-600 data-[state=on]:!bg-emerald-500 data-[state=on]:!text-white data-[state=on]:hover:!bg-emerald-600 disabled:cursor-wait disabled:opacity-80"
-                              : "min-w-24 justify-center border border-neutral-700 !bg-neutral-900 !text-neutral-300 hover:!bg-neutral-800 hover:!text-neutral-100 hover:border-neutral-600 disabled:cursor-wait disabled:opacity-80"
+                              ? "min-w-24 shrink-0 justify-center !bg-emerald-500 !text-white hover:!bg-emerald-600 data-[state=on]:!bg-emerald-500 data-[state=on]:!text-white data-[state=on]:hover:!bg-emerald-600 disabled:cursor-wait disabled:opacity-80"
+                              : "min-w-24 shrink-0 justify-center border border-neutral-700 !bg-neutral-900 !text-neutral-300 hover:!bg-neutral-800 hover:!text-neutral-100 hover:border-neutral-600 disabled:cursor-wait disabled:opacity-80"
                           }
                           size="sm"
                           aria-label={
