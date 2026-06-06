@@ -156,7 +156,7 @@ export function DashboardDataTable({ table, users, summaries }: DashboardDataTab
           return (
             <td
               key={cell.id}
-              className={`h-40 whitespace-nowrap px-1 py-2 align-middle ${leadingCellTypography(id)} ${leadingBodyClass(id)}`}
+              className={`h-40 min-h-40 whitespace-nowrap px-1 py-2 align-middle ${leadingCellTypography(id)} ${leadingBodyClass(id)}`}
             >
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </td>
@@ -185,7 +185,7 @@ export function DashboardDataTable({ table, users, summaries }: DashboardDataTab
           return (
             <td
               key={cell.id}
-              className={`h-40 whitespace-normal p-0 align-middle text-sm ${scrollBodyClass(id)}`}
+              className={`h-40 min-h-40 whitespace-normal p-0 align-middle text-sm ${scrollBodyClass(id)}`}
             >
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </td>

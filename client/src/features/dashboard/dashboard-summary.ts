@@ -55,12 +55,17 @@ export function computeDashboardUserSummaries(
   const weeklyTotalsByUser = new Map<number, Map<number, number>>();
   const dailyTotalHoursByDay = new Map<number, number>();
 
+  const approvedUserIds = new Set<number>();
   for (const user of users) {
+    approvedUserIds.add(user.id);
     monthlySumByUserId.set(user.id, 0);
     weeklyTotalsByUser.set(user.id, new Map());
   }
 
   for (const task of tasks) {
+    if (!approvedUserIds.has(task.userId)) {
+      continue;
+    }
     if (!taskMatchesMonth(task, year, month)) {
       continue;
     }

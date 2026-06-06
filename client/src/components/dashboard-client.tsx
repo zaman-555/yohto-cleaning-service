@@ -308,8 +308,8 @@ export default function DashboardClient({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 p-8 font-sans text-neutral-100 selection:bg-indigo-500/30">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <div className="min-h-screen bg-neutral-950 p-4 font-sans text-neutral-100 selection:bg-indigo-500/30 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
         <DashboardHeader
           user={user}
           manageableMembers={manageableMembers}

@@ -26,21 +26,9 @@ export function WeeklyWeekPagination({ year, weekNumber }: WeeklyWeekPaginationP
   return (
     <nav
       aria-label="Week navigation"
-      className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-neutral-800 bg-neutral-900/80 px-4 py-3"
+      className="flex flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-900/80 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-4"
     >
-      <Button
-        asChild
-        variant="outline"
-        size="sm"
-        className="border-neutral-700 bg-neutral-950 text-neutral-200 hover:bg-neutral-800"
-      >
-        <Link href={weeklyPagePath(prev)} prefetch>
-          <ChevronLeft className="size-4" aria-hidden />
-          Previous week
-        </Link>
-      </Button>
-
-      <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-2 text-center">
+      <div className="order-first flex flex-col items-center gap-0.5 text-center sm:order-2 sm:min-w-0 sm:flex-1 sm:px-2">
         <p className="text-sm font-semibold text-neutral-100">
           Week {weekNumber}
           <span className="font-normal text-neutral-400"> · {year}</span>
@@ -55,30 +43,43 @@ export function WeeklyWeekPagination({ year, weekNumber }: WeeklyWeekPaginationP
         ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        {!isCurrentWeek ? (
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="border-neutral-700 bg-neutral-950 text-neutral-200 hover:bg-neutral-800"
-          >
-            <Link href={weeklyPagePath(current)} prefetch>
-              Today
-            </Link>
-          </Button>
-        ) : null}
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:contents">
         <Button
           asChild
           variant="outline"
           size="sm"
-          className="border-neutral-700 bg-neutral-950 text-neutral-200 hover:bg-neutral-800"
+          className="order-1 border-neutral-700 bg-neutral-950 text-neutral-200 hover:bg-neutral-800 sm:order-1"
+        >
+          <Link href={weeklyPagePath(prev)} prefetch>
+            <ChevronLeft className="size-4" aria-hidden />
+            Previous week
+          </Link>
+        </Button>
+
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="order-2 border-neutral-700 bg-neutral-950 text-neutral-200 hover:bg-neutral-800 sm:order-4"
         >
           <Link href={weeklyPagePath(next)} prefetch>
             Next week
             <ChevronRight className="size-4" aria-hidden />
           </Link>
         </Button>
+
+        {!isCurrentWeek ? (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="order-3 basis-full justify-center border-neutral-700 bg-neutral-950 text-neutral-200 hover:bg-neutral-800 sm:order-3 sm:basis-auto"
+          >
+            <Link href={weeklyPagePath(current)} prefetch>
+              Today
+            </Link>
+          </Button>
+        ) : null}
       </div>
     </nav>
   );

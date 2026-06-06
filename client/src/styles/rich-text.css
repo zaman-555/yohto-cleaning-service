@@ -172,3 +172,14 @@
   opacity: 0.6;
   pointer-events: none;
 }
+
+/* Center the link tooltip instead of anchoring it to the cursor position */
+.rich-text-editor .ql-snow .ql-tooltip {
+  left: 50% !important;
+  transform: translateX(-50%);
+  margin-left: 0;
+}
+
+.rich-text-editor .ql-snow .ql-tooltip.ql-flip {
+  transform: translateX(-50%);
+}

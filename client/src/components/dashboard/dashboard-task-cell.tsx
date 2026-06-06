@@ -24,7 +24,7 @@ export function DashboardTaskCell({
 
   return (
     <div
-      className="group/cell flex h-full w-full min-w-0 flex-col overflow-hidden px-2.5 py-2"
+      className="group/cell flex min-h-full w-full min-w-0 flex-col px-2.5 py-2"
       data-user={userName}
       data-day={row.dateNum}
     >
@@ -50,15 +50,15 @@ export function DashboardTaskCell({
         ) : null}
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-hidden text-left">
-        <p className="w-full overflow-hidden break-all text-base font-semibold leading-snug text-neutral-50">
+      <div className="flex min-w-0 flex-1 flex-col gap-1 text-left">
+        <p className="w-full break-words text-base font-semibold leading-snug text-neutral-50">
           {task.companyName}
         </p>
         <RichTextContent
           html={task.task}
-          className="max-h-16 w-full overflow-hidden text-sm leading-snug text-neutral-300"
+          className="w-full break-words text-sm leading-snug text-neutral-300"
         />
-        <p className="w-full overflow-hidden break-all text-sm font-medium leading-snug text-neutral-400">
+        <p className="w-full break-words text-sm font-medium leading-snug text-neutral-400">
           {task.carName}
         </p>
       </div>
