@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Toggle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
 
 type DashboardHeaderProps = {
   user: CurrentUser | null;
@@ -46,7 +46,7 @@ export function DashboardHeader({
 
   return (
     <header className="relative flex flex-col gap-2">
-      <div className="absolute right-0 top-0 z-50 flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:absolute sm:right-0 sm:top-0 sm:z-50 sm:justify-end sm:gap-4">
         {user?.isAdmin && (
           <div className="flex items-center gap-3">
             <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-400">
@@ -61,7 +61,7 @@ export function DashboardHeader({
                   Manage Users
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-72 border-neutral-800 bg-neutral-900 text-neutral-200">
+              <DropdownMenuContent className="w-[min(18rem,calc(100vw-2rem))] border-neutral-800 bg-neutral-900 text-neutral-200">
                 <DropdownMenuLabel className="uppercase tracking-wider text-neutral-500">
                   Team Members
                 </DropdownMenuLabel>
@@ -75,36 +75,31 @@ export function DashboardHeader({
                         className="flex items-center justify-between focus:!bg-neutral-800/70 focus:!text-neutral-100 focus:**:!text-current"
                         onSelect={(e) => e.preventDefault()}
                       >
-                        <div className="flex flex-col pr-4">
-                          <span className="font-medium">{member.name}</span>
-                          <span className="text-xs text-neutral-500">{member.email}</span>
+                        <div className="flex min-w-0 flex-1 flex-col pr-4">
+                          <span className="truncate font-medium">{member.name}</span>
+                          <span className="truncate text-xs text-neutral-500">{member.email}</span>
                         </div>
-                        <Toggle
-                          pressed={member.isApproved}
-                          disabled={isPending}
-                          onPressedChange={() =>
-                            onToggleApproval(member.id, member.isApproved)
-                          }
-                          className={
-                            member.isApproved
-                              ? "min-w-24 justify-center !bg-emerald-500 !text-white hover:!bg-emerald-600 data-[state=on]:!bg-emerald-500 data-[state=on]:!text-white data-[state=on]:hover:!bg-emerald-600 disabled:cursor-wait disabled:opacity-80"
-                              : "min-w-24 justify-center border border-neutral-700 !bg-neutral-900 !text-neutral-300 hover:!bg-neutral-800 hover:!text-neutral-100 hover:border-neutral-600 disabled:cursor-wait disabled:opacity-80"
-                          }
-                          size="sm"
-                          aria-label={
-                            isPending
-                              ? `Updating ${member.name}'s approval`
-                              : `Toggle ${member.name}'s approval`
-                          }
-                        >
+                        <div className="flex shrink-0 items-center gap-2">
                           {isPending ? (
-                            <Loader2 className="size-4 animate-spin" aria-hidden />
-                          ) : member.isApproved ? (
-                            "Approved"
-                          ) : (
-                            "Pending"
-                          )}
-                        </Toggle>
+                            <Loader2
+                              className="size-4 animate-spin text-neutral-400"
+                              aria-hidden
+                            />
+                          ) : null}
+                          <Switch
+                            checked={member.isApproved}
+                            disabled={isPending}
+                            onCheckedChange={() =>
+                              onToggleApproval(member.id, member.isApproved)
+                            }
+                            className="disabled:cursor-wait disabled:opacity-80"
+                            aria-label={
+                              isPending
+                                ? `Updating ${member.name}'s approval`
+                                : `Toggle ${member.name}'s approval`
+                            }
+                          />
+                        </div>
                       </DropdownMenuItem>
                     );
                   })}
@@ -126,10 +121,10 @@ export function DashboardHeader({
           Log Out
         </Button>
       </div>
-      <h1 className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">
+      <h1 className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent sm:text-4xl">
         {title}
       </h1>
-      <p className="text-lg text-neutral-400">{subtitle}</p>
+      <p className="text-base text-neutral-400 sm:text-lg">{subtitle}</p>
       <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm">
         <Link href="/" className={navLinkClass(onMain)}>
           Main dashboard

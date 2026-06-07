@@ -49,7 +49,7 @@ export function TaskDialog({
 }: TaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-neutral-800 bg-neutral-900 text-neutral-100 sm:max-w-lg">
+      <DialogContent className="flex max-h-[90dvh] flex-col border-neutral-800 bg-neutral-900 text-neutral-100 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-neutral-100">
             {editingTaskId != null ? "Update task" : "Add Task"}
@@ -63,7 +63,8 @@ export function TaskDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 pb-1">
           <div className="space-y-2">
             <Label>Date</Label>
             <div
@@ -180,8 +181,9 @@ export function TaskDialog({
           {taskSubmitError ? (
             <p className="text-sm text-red-400">{taskSubmitError}</p>
           ) : null}
+          </div>
 
-          <DialogFooter className="-mx-0 -mb-0 rounded-b-lg border-neutral-800 bg-neutral-900/80 p-0 pt-2">
+          <DialogFooter className="-mx-4 -mb-4 mt-4 rounded-b-lg border-t border-neutral-800 bg-neutral-900/80 p-4">
             <Button
               type="button"
               variant="outline"
