@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { clearAuthCookies, setAuthCookies } from '../config/auth-cookies';
 import { authConfig } from '../config/auth';
 import { emailConfig } from '../config/email';
 import * as passwordResetTokenModel from '../models/password-reset-token.model';
@@ -141,6 +142,8 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     const { accessToken, refreshToken } = await issueAuthTokens(user);
 
+    setAuthCookies(res, req, accessToken, refreshToken);
+
     res.status(200).json({
       message: 'Login successful',
       user: userPublic,
@@ -151,6 +154,25 @@ export async function login(req: Request, res: Response): Promise<void> {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+}
+
+export async function establishSession(req: Request, res: Response): Promise<void> {
+  const { token, refreshToken } = req.body as { token?: string; refreshToken?: string };
+  const accessToken = token?.trim();
+  const refresh = refreshToken?.trim();
+
+  if (!accessToken || !refresh) {
+    res.status(400).json({ error: 'Token and refresh token are required' });
+    return;
+  }
+
+  setAuthCookies(res, req, accessToken, refresh);
+  res.status(200).json({ ok: true });
+}
+
+export async function clearSession(_req: Request, res: Response): Promise<void> {
+  clearAuthCookies(res, _req);
+  res.status(200).json({ ok: true });
 }
 
 export async function refresh(req: Request, res: Response): Promise<void> {
@@ -199,6 +221,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
   const { refreshToken } = req.body as { refreshToken?: string };
 
   if (!refreshToken) {
+    clearAuthCookies(res, req);
     res.status(200).json({ message: 'Logged out' });
     return;
   }
@@ -212,6 +235,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
     console.error('Logout token revoke error:', error);
   }
 
+  clearAuthCookies(res, req);
   res.status(200).json({ message: 'Logged out' });
 }
 

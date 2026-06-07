@@ -32,13 +32,35 @@ export function clearAuthUser(): void {
   localStorage.removeItem(AUTH_USER_STORAGE_KEY);
 }
 
-export async function establishServerSession(token: string, refreshToken: string): Promise<boolean> {
+export type EstablishSessionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function establishServerSession(
+  token: string,
+  refreshToken: string
+): Promise<EstablishSessionResult> {
   const response = await fetch('/api/auth/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, refreshToken }),
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      token: token.trim(),
+      refreshToken: refreshToken.trim(),
+    }),
   });
-  return response.ok;
+
+  if (response.ok) {
+    return { ok: true };
+  }
+
+  const data = (await response.json().catch(() => null)) as { error?: string } | null;
+  return {
+    ok: false,
+    error:
+      data?.error ??
+      `Could not establish a secure session (${response.status}). Please try again.`,
+  };
 }
 
 export async function clearServerSession(): Promise<void> {
