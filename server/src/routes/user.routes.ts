@@ -8,5 +8,6 @@ router.use(authenticate, requireApproved);
 
 router.get('/', userController.getUsers);
 router.patch('/:id/approval', requireAdmin, userController.updateApproval);
+router.delete('/:id', requireAdmin, userController.deleteUser);
 
 export default router;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateUserApproval } from "@/features/dashboard/actions";
+import { deleteUser, updateUserApproval } from "@/features/dashboard/actions";
 import { clearAuthUser, clearServerSession, getAuthUser } from "@/lib/auth/client";
 import type { CurrentUser, TeamMember, User } from "@/features/dashboard/types";
 
@@ -12,6 +12,9 @@ export function useDashboardShell(
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
   const [pendingApprovalIds, setPendingApprovalIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<number>>(
     () => new Set()
   );
   const router = useRouter();
@@ -30,6 +33,7 @@ export function useDashboardShell(
   useEffect(() => {
     setTeamMembers(initialTeamMembers);
     setPendingApprovalIds((current) => (current.size === 0 ? current : new Set()));
+    setPendingDeleteIds((current) => (current.size === 0 ? current : new Set()));
   }, [initialTeamMembers, users]);
 
   const manageableMembers = teamMembers.filter((member) => !member.isAdmin);
@@ -86,6 +90,42 @@ export function useDashboardShell(
     [pendingApprovalIds, router]
   );
 
+  const removeUser = useCallback(
+    async (id: number) => {
+      if (pendingDeleteIds.has(id)) return;
+
+      setPendingDeleteIds((current) => {
+        const next = new Set(current);
+        next.add(id);
+        return next;
+      });
+
+      const clearPending = () =>
+        setPendingDeleteIds((current) => {
+          if (!current.has(id)) return current;
+          const next = new Set(current);
+          next.delete(id);
+          return next;
+        });
+
+      try {
+        const result = await deleteUser(id);
+        if (!result.ok) {
+          clearPending();
+          console.error("Failed to delete user", result.error);
+          return;
+        }
+
+        setTeamMembers((members) => members.filter((member) => member.id !== id));
+        router.refresh();
+      } catch (err) {
+        clearPending();
+        console.error("Failed to delete user", err);
+      }
+    },
+    [pendingDeleteIds, router]
+  );
+
   const handleLogout = useCallback(async () => {
     await clearServerSession();
     clearAuthUser();
@@ -98,7 +138,9 @@ export function useDashboardShell(
     loading,
     manageableMembers,
     pendingApprovalIds,
+    pendingDeleteIds,
     toggleApproval,
+    removeUser,
     handleLogout,
   };
 }

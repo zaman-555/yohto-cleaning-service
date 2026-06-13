@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { WeeklyWeekPagination } from "@/components/dashboard/weekly-week-pagination";
 import { useDashboardShell } from "@/components/dashboard/use-dashboard-shell";
 import { WeeklyCellDialog } from "@/components/dashboard/weekly-cell-dialog";
@@ -77,7 +77,9 @@ export default function WeeklyShowcaseClient({
     loading,
     manageableMembers,
     pendingApprovalIds,
+    pendingDeleteIds,
     toggleApproval,
+    removeUser,
     handleLogout,
   } = useDashboardShell(initialTeamMembers, users);
 
@@ -185,25 +187,24 @@ export default function WeeklyShowcaseClient({
   const colCount = WEEKLY_SHOWCASE_COLUMNS.length;
 
   return (
-    <div className="min-h-screen bg-neutral-950 p-4 font-sans text-neutral-100 selection:bg-indigo-500/30 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
-        <DashboardHeader
-          user={user}
-          manageableMembers={manageableMembers}
-          pendingApprovalIds={pendingApprovalIds}
-          onToggleApproval={toggleApproval}
-          onLogout={handleLogout}
-          title="Weekly showcase"
-          subtitle={
-            weekRangeLabel
-              ? `Calendar week ${weekNumber}, ${year} (${weekRangeLabel})`
-              : `Calendar week ${weekNumber}, ${year}`
-          }
-        />
+    <DashboardShell
+      user={user}
+      manageableMembers={manageableMembers}
+      pendingApprovalIds={pendingApprovalIds}
+      pendingDeleteIds={pendingDeleteIds}
+      onToggleApproval={toggleApproval}
+      onDeleteUser={removeUser}
+      onLogout={handleLogout}
+      title="Weekly showcase"
+      subtitle={
+        weekRangeLabel
+          ? `Calendar week ${weekNumber}, ${year} (${weekRangeLabel})`
+          : `Calendar week ${weekNumber}, ${year}`
+      }
+    >
+      <WeeklyWeekPagination year={year} weekNumber={weekNumber} />
 
-        <WeeklyWeekPagination year={year} weekNumber={weekNumber} />
-
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
             variant="outline"
@@ -231,7 +232,7 @@ export default function WeeklyShowcaseClient({
           ) : null}
         </div>
 
-        <main className="overflow-hidden border border-neutral-800 bg-neutral-900 shadow-2xl backdrop-blur-sm">
+        <div className="overflow-hidden border border-neutral-800 bg-neutral-900 shadow-2xl backdrop-blur-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[68rem] border-separate border-spacing-0 text-center text-sm">
               <thead className="bg-neutral-950/50">
@@ -291,7 +292,7 @@ export default function WeeklyShowcaseClient({
               </tbody>
             </table>
           </div>
-        </main>
+        </div>
 
         <WeeklyCellDialog
           open={cellDialogOpen}
@@ -313,7 +314,6 @@ export default function WeeklyShowcaseClient({
           isSubmitting={isSavingCell}
           onSubmit={handleCellSubmit}
         />
-      </div>
-    </div>
+    </DashboardShell>
   );
 }

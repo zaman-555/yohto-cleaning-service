@@ -55,6 +55,13 @@ export async function updateUserApproval(id: number, isApproved: boolean) {
   });
 }
 
+export async function deleteUser(id: number) {
+  // Caller guarantees the user is already unapproved. Related rows (tasks,
+  // refresh tokens, password reset tokens) are removed automatically via
+  // onDelete: Cascade.
+  return prisma.user.delete({ where: { id } });
+}
+
 export async function userExistsById(id: number) {
   const row = await prisma.user.findUnique({
     where: { id },
