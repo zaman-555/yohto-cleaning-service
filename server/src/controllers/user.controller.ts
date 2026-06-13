@@ -49,3 +49,42 @@ export async function updateApproval(req: Request, res: Response): Promise<void>
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+export async function deleteUser(req: Request, res: Response): Promise<void> {
+  const { id } = req.params;
+
+  const userId = Number(id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    res.status(400).json({ error: 'Invalid user id' });
+    return;
+  }
+
+  if (req.authUser?.id === userId) {
+    res.status(400).json({ error: 'You cannot delete your own account' });
+    return;
+  }
+
+  try {
+    const target = await userModel.findUserById(userId);
+    if (!target) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (target.isAdmin) {
+      res.status(403).json({ error: 'Admin accounts cannot be deleted' });
+      return;
+    }
+
+    if (target.isApproved) {
+      res.status(400).json({ error: 'User must be unapproved before deletion' });
+      return;
+    }
+
+    await userModel.deleteUser(userId);
+    res.json({ message: 'User deleted' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}

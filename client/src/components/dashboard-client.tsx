@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { extractUrlFromRichText, isRichTextEmpty } from "@/lib/rich-text";
-import { createTask, updateTask, updateUserApproval } from "@/features/dashboard/actions";
+import { createTask, deleteUser, updateTask, updateUserApproval } from "@/features/dashboard/actions";
 import { clearAuthUser, clearServerSession, getAuthUser } from "@/lib/auth/client";
 import type {
   CurrentUser,
@@ -14,7 +14,7 @@ import type {
   TransportType,
 } from "@/features/dashboard/types";
 import { DashboardDataTable } from "./dashboard/dashboard-data-table";
-import { DashboardHeader } from "./dashboard/dashboard-header";
+import { DashboardShell } from "./dashboard/dashboard-shell";
 import { MonthlyMonthPagination } from "./dashboard/monthly-month-pagination";
 import { TaskDialog } from "./dashboard/task-dialog";
 import {
@@ -43,6 +43,9 @@ export default function DashboardClient({
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
   const [pendingApprovalIds, setPendingApprovalIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<number>>(
     () => new Set()
   );
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
@@ -155,6 +158,7 @@ export default function DashboardClient({
   useEffect(() => {
     setTeamMembers(initialTeamMembers);
     setPendingApprovalIds((current) => (current.size === 0 ? current : new Set()));
+    setPendingDeleteIds((current) => (current.size === 0 ? current : new Set()));
   }, [initialTeamMembers, users]);
 
   const columns = useDashboardColumns({
@@ -222,6 +226,39 @@ export default function DashboardClient({
       );
       clearPending();
       console.error("Failed to update approval", err);
+    }
+  };
+
+  const removeUser = async (id: number) => {
+    if (pendingDeleteIds.has(id)) return;
+
+    setPendingDeleteIds((current) => {
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
+
+    const clearPending = () =>
+      setPendingDeleteIds((current) => {
+        if (!current.has(id)) return current;
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+
+    try {
+      const result = await deleteUser(id);
+      if (!result.ok) {
+        clearPending();
+        console.error("Failed to delete user", result.error);
+        return;
+      }
+
+      setTeamMembers((members) => members.filter((member) => member.id !== id));
+      router.refresh();
+    } catch (err) {
+      clearPending();
+      console.error("Failed to delete user", err);
     }
   };
 
@@ -308,40 +345,39 @@ export default function DashboardClient({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 p-4 font-sans text-neutral-100 selection:bg-indigo-500/30 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
-        <DashboardHeader
-          user={user}
-          manageableMembers={manageableMembers}
-          pendingApprovalIds={pendingApprovalIds}
-          onToggleApproval={toggleApproval}
-          onLogout={handleLogout}
-          subtitle={`Manage your team's availability and schedule for ${monthLabel}.`}
-        />
+    <DashboardShell
+      user={user}
+      manageableMembers={manageableMembers}
+      pendingApprovalIds={pendingApprovalIds}
+      pendingDeleteIds={pendingDeleteIds}
+      onToggleApproval={toggleApproval}
+      onDeleteUser={removeUser}
+      onLogout={handleLogout}
+      title="Employee Dashboard"
+      subtitle={`Manage your team's availability and schedule for ${monthLabel}.`}
+    >
+      <MonthlyMonthPagination year={year} monthNumber={monthNumber} />
 
-        <MonthlyMonthPagination year={year} monthNumber={monthNumber} />
+      <DashboardDataTable table={table} users={users} summaries={summaries} />
 
-        <DashboardDataTable table={table} users={users} summaries={summaries} />
-
-        <TaskDialog
-          open={isTaskDialogOpen}
-          onOpenChange={(open) => {
-            setIsTaskDialogOpen(open);
-            if (!open) {
-              setEditingTaskId(null);
-            }
-          }}
-          editingTaskId={editingTaskId}
-          selectedTaskUser={selectedTaskUser}
-          taskShift={taskShift}
-          onTaskShiftChange={setTaskShift}
-          taskForm={taskForm}
-          onTaskFormChange={setTaskForm}
-          taskSubmitError={taskSubmitError}
-          isSubmittingTask={isSubmittingTask}
-          onSubmit={handleTaskSubmit}
-        />
-      </div>
-    </div>
+      <TaskDialog
+        open={isTaskDialogOpen}
+        onOpenChange={(open) => {
+          setIsTaskDialogOpen(open);
+          if (!open) {
+            setEditingTaskId(null);
+          }
+        }}
+        editingTaskId={editingTaskId}
+        selectedTaskUser={selectedTaskUser}
+        taskShift={taskShift}
+        onTaskShiftChange={setTaskShift}
+        taskForm={taskForm}
+        onTaskFormChange={setTaskForm}
+        taskSubmitError={taskSubmitError}
+        isSubmittingTask={isSubmittingTask}
+        onSubmit={handleTaskSubmit}
+      />
+    </DashboardShell>
   );
 }

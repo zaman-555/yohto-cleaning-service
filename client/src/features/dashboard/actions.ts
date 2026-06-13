@@ -24,6 +24,31 @@ export async function updateUserApproval(userId: number, isApproved: boolean): P
   }
 }
 
+export type DeleteUserResult = {
+  ok: boolean;
+  error?: string;
+};
+
+export async function deleteUser(userId: number): Promise<DeleteUserResult> {
+  try {
+    const authHeaders = await getServerAuthHeaders();
+    const response = await fetch(serverApiUrl(`/api/users/${userId}`), {
+      method: "DELETE",
+      headers: { ...authHeaders },
+      cache: "no-store",
+    });
+
+    if (response.ok) {
+      return { ok: true };
+    }
+
+    const data = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, error: data?.error ?? "Failed to delete user." };
+  } catch {
+    return { ok: false, error: "Request failed. Please check backend connection." };
+  }
+}
+
 export type CreateTaskResult = {
   ok: boolean;
   error?: string;
