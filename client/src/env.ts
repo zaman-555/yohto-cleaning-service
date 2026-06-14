@@ -27,7 +27,8 @@ function parseRawEnv() {
 }
 
 const isProd = process.env.NODE_ENV === "production";
-const DEV_DEFAULT_API_BASE = "http://localhost:5000";
+const isVercelDeployment = process.env.VERCEL === "1";
+const DEV_DEFAULT_API_BASE = "http://127.0.0.1:5000";
 
 let cachedRaw: ReturnType<typeof parseRawEnv> | null = null;
 
@@ -47,7 +48,7 @@ function resolvePublicApiBaseUrl(): string {
   if (raw.NEXT_PUBLIC_API_BASE_URL) {
     return stripTrailingSlash(raw.NEXT_PUBLIC_API_BASE_URL);
   }
-  if (!isProd) {
+  if (!isProd || !isVercelDeployment) {
     return DEV_DEFAULT_API_BASE;
   }
   throw new Error(
@@ -67,7 +68,7 @@ function resolveServerApiBaseUrl(): string {
   if (raw.NEXT_PUBLIC_API_BASE_URL) {
     return stripTrailingSlash(raw.NEXT_PUBLIC_API_BASE_URL);
   }
-  if (!isProd) {
+  if (!isProd || !isVercelDeployment) {
     return DEV_DEFAULT_API_BASE;
   }
   throw new Error(

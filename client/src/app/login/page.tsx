@@ -61,18 +61,18 @@ export default function Login() {
         return;
       }
 
-      if (!data.token || typeof data.token !== "string") {
+      if (!data.token?.trim() || typeof data.token !== "string") {
         setError("Login succeeded but no session token was returned.");
         return;
       }
-      if (!data.refreshToken || typeof data.refreshToken !== "string") {
+      if (!data.refreshToken?.trim() || typeof data.refreshToken !== "string") {
         setError("Login succeeded but no refresh token was returned.");
         return;
       }
 
-      const sessionOk = await establishServerSession(data.token, data.refreshToken);
-      if (!sessionOk) {
-        setError("Could not establish a secure session. Please try again.");
+      const sessionResult = await establishServerSession(data.token, data.refreshToken);
+      if (!sessionResult.ok) {
+        setError(sessionResult.error);
         return;
       }
 

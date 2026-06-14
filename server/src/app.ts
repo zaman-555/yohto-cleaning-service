@@ -15,6 +15,9 @@ const corsAllowedOrigins = [
   clientOrigin,
   'http://192.168.0.169:3000',
   'https://yohto-cleaning-service-dczi.vercel.app',
+  'https://app.pcsmonthlypla.online',      // Add this
+  'https://api.pcsmonthlypla.online',      // Add this
+  'https://*.pcsmonthlypla.online',  
 ];
 
 app.use(
