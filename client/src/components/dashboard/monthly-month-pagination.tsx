@@ -30,9 +30,9 @@ export function MonthlyMonthPagination({ year, monthNumber }: MonthlyMonthPagina
     >
       <Button
         asChild
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="text-neutral-400 hover:bg-transparent hover:text-neutral-100"
+        className="shrink-0 rounded-full border-neutral-700 bg-neutral-900 text-neutral-200 hover:border-neutral-600 hover:bg-neutral-800 hover:text-white"
       >
         <Link href={monthlyPagePath(prev)} prefetch aria-label="Previous month">
           <ChevronLeft className="size-5" aria-hidden />
@@ -46,21 +46,24 @@ export function MonthlyMonthPagination({ year, monthNumber }: MonthlyMonthPagina
             Current month
           </span>
         ) : (
-          <Link
-            href={monthlyPagePath(current)}
-            prefetch
-            className="text-[0.65rem] font-medium uppercase tracking-wide text-neutral-500 hover:text-neutral-300"
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="mt-1 h-7 border-neutral-700 bg-neutral-950 px-3 text-xs font-medium text-neutral-200 hover:bg-neutral-800 hover:text-neutral-100"
           >
-            Today
-          </Link>
+            <Link href={monthlyPagePath(current)} prefetch>
+              Today
+            </Link>
+          </Button>
         )}
       </div>
 
       <Button
         asChild
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="text-neutral-400 hover:bg-transparent hover:text-neutral-100"
+        className="shrink-0 rounded-full border-neutral-700 bg-neutral-900 text-neutral-200 hover:border-neutral-600 hover:bg-neutral-800 hover:text-white"
       >
         <Link href={monthlyPagePath(next)} prefetch aria-label="Next month">
           <ChevronRight className="size-5" aria-hidden />

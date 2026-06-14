@@ -43,6 +43,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -95,8 +97,12 @@ export function AppSidebar({
     <Sidebar collapsible="icon" className="border-neutral-800">
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+          <SidebarMenuItem className="flex items-center gap-1">
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              className="flex-1 group-data-[collapsible=icon]:hidden"
+            >
               <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 text-sm font-extrabold text-white">
                   Y
@@ -109,6 +115,7 @@ export function AppSidebar({
                 </div>
               </Link>
             </SidebarMenuButton>
+            <SidebarTrigger className="shrink-0 text-neutral-400 hover:bg-sidebar-accent hover:text-white group-data-[collapsible=icon]:mx-auto" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -141,12 +148,14 @@ export function AppSidebar({
         </SidebarGroup>
 
         {user?.isAdmin && (
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel>
-              <Users className="mr-1.5" />
-              Manage users
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
+          <>
+            <SidebarSeparator className="my-2 group-data-[collapsible=icon]:hidden" />
+            <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel>
+                <Users className="mr-1.5" />
+                Manage users
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
               <div className="flex flex-col gap-1">
                 {manageableMembers.map((member) => {
                   const isPending = pendingApprovalIds.has(member.id);
@@ -210,8 +219,9 @@ export function AppSidebar({
                   </p>
                 )}
               </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         )}
       </SidebarContent>
 
