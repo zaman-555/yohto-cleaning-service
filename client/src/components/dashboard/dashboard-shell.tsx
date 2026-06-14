@@ -61,9 +61,9 @@ export function DashboardShell({
         onDeleteUser={onDeleteUser}
         onLogout={onLogout}
       />
-      <SidebarInset className="bg-neutral-950 text-neutral-100">
+      <SidebarInset className="min-w-0 bg-neutral-950 text-neutral-100">
         <header className="sticky top-0 z-30 flex shrink-0 items-center gap-2 border-b border-neutral-800 bg-neutral-950/80 px-4 py-3 backdrop-blur-sm sm:px-6">
-          <SidebarTrigger className="border-0 bg-transparent text-neutral-400 shadow-none hover:bg-transparent hover:text-white" />
+          <SidebarTrigger className="border-0 bg-transparent text-neutral-400 shadow-none hover:bg-transparent hover:text-white md:hidden" />
           <div className="flex min-w-0 flex-col">
             <h1 className="truncate bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-lg font-extrabold tracking-tight text-transparent sm:text-xl">
               {title}
