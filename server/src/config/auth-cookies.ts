@@ -17,13 +17,14 @@ function isSecureRequest(req: Request): boolean {
     return forwardedProto.split(',')[0]?.trim() === 'https';
   }
 
-  return process.env.NODE_ENV === 'production';
+  return false;
 }
 
 function cookieOptions(req: Request, maxAge: number) {
+  const secure = isSecureRequest(req);
   return {
     httpOnly: true,
-    secure: isSecureRequest(req),
+    secure,
     sameSite: 'lax' as const,
     path: '/',
     maxAge: maxAge * 1000,
@@ -41,6 +42,16 @@ export function setAuthCookies(
 }
 
 export function clearAuthCookies(res: Response, req: Request): void {
-  res.clearCookie(AUTH_COOKIE_NAME, cookieOptions(req, 0));
-  res.clearCookie(REFRESH_COOKIE_NAME, cookieOptions(req, 0));
+  const secure = isSecureRequest(req);
+  const base = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/',
+  };
+
+  // Match Secure flag used when the cookie was set (required by browsers to delete).
+  for (const secureFlag of secure ? [true] : [false, true]) {
+    res.clearCookie(AUTH_COOKIE_NAME, { ...base, secure: secureFlag });
+    res.clearCookie(REFRESH_COOKIE_NAME, { ...base, secure: secureFlag });
+  }
 }
