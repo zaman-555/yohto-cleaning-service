@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { extractUrlFromRichText, isRichTextEmpty } from "@/lib/rich-text";
+import { isRichTextEmpty } from "@/lib/rich-text";
 import { createTask, deleteUser, updateTask, updateUserApproval } from "@/features/dashboard/actions";
 import { clearAuthUser, clearServerSession, getAuthUser } from "@/lib/auth/client";
 import type {
@@ -67,14 +67,23 @@ export default function DashboardClient({
     location: "",
   });
 
-  const taskLookup = useMemo(() => tasksByUserAndDay(initialTasks), [initialTasks]);
+  const [tasks, setTasks] = useState<TaskRecord[]>(initialTasks);
+
+  // Keep local tasks in sync with the server-refreshed props. Optimistic
+  // edits below update `tasks` immediately; this reconciles once the
+  // refreshed data lands.
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
+
+  const taskLookup = useMemo(() => tasksByUserAndDay(tasks), [tasks]);
 
   const calendarYear = year;
   const calendarMonth = monthNumber;
 
   const summaries = useMemo(
-    () => computeDashboardUserSummaries(initialTasks, users, calendarYear, calendarMonth),
-    [initialTasks, users, calendarYear, calendarMonth]
+    () => computeDashboardUserSummaries(tasks, users, calendarYear, calendarMonth),
+    [tasks, users, calendarYear, calendarMonth]
   );
 
   const openTaskDialog = useCallback(
@@ -291,8 +300,8 @@ export default function DashboardClient({
       return;
     }
 
-    if (isRichTextEmpty(taskForm.location) || !extractUrlFromRichText(taskForm.location)) {
-      setTaskSubmitError("Location must include a valid URL.");
+    if (isRichTextEmpty(taskForm.location)) {
+      setTaskSubmitError("Please enter a location.");
       setIsSubmittingTask(false);
       return;
     }
@@ -328,6 +337,27 @@ export default function DashboardClient({
       );
       setIsSubmittingTask(false);
       return;
+    }
+
+    // Optimistically reflect the edit (e.g. transport color) right away so
+    // the cell updates instantly instead of waiting for the server refresh.
+    if (editingTaskId != null) {
+      const editedId = editingTaskId;
+      setTasks((current) =>
+        current.map((t) =>
+          t.id === editedId
+            ? {
+                ...t,
+                shift: body.shift,
+                companyName: body.companyName,
+                task: body.task,
+                carName: body.carName,
+                transportType: body.transportType,
+                location: body.location,
+              }
+            : t
+        )
+      );
     }
 
     setIsSubmittingTask(false);

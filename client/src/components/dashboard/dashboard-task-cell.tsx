@@ -1,6 +1,10 @@
 import { MapPin, Pencil } from "lucide-react";
 import { RichTextContent } from "@/components/ui/rich-text-content";
-import { extractUrlFromRichText, looksLikeHtml } from "@/lib/rich-text";
+import {
+  extractUrlFromRichText,
+  isRichTextEmpty,
+  looksLikeHtml,
+} from "@/lib/rich-text";
 import type { DashboardRow, TaskRecord } from "@/features/dashboard/types";
 import { TransportTypeDot } from "./transport-type-dot";
 import { formatShiftLabel } from "./task-utils";
@@ -21,6 +25,12 @@ export function DashboardTaskCell({
   onEdit,
 }: DashboardTaskCellProps) {
   const locationHref = extractUrlFromRichText(task.location);
+  const hasLocation = !isRichTextEmpty(task.location);
+  const locationContent = looksLikeHtml(task.location) ? (
+    <RichTextContent html={task.location} inline className="text-xs" />
+  ) : (
+    <span className="truncate">{locationHref ? "Location" : task.location}</span>
+  );
 
   return (
     <div
@@ -63,23 +73,26 @@ export function DashboardTaskCell({
         </p>
       </div>
 
-      {locationHref ? (
+      {hasLocation ? (
         <div className="mt-1.5 flex justify-start border-t border-neutral-800/80 pt-1.5">
-          <a
-            href={locationHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex max-w-full items-center gap-1 rounded-md text-xs text-indigo-400 transition-colors hover:text-indigo-300"
-            aria-label="Open location"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MapPin className="size-3.5 shrink-0" aria-hidden />
-            {looksLikeHtml(task.location) ? (
-              <RichTextContent html={task.location} inline className="text-xs" />
-            ) : (
-              <span className="truncate">Location</span>
-            )}
-          </a>
+          {locationHref ? (
+            <a
+              href={locationHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex max-w-full items-center gap-1 rounded-md text-xs text-indigo-400 transition-colors hover:text-indigo-300"
+              aria-label="Open location"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MapPin className="size-3.5 shrink-0" aria-hidden />
+              {locationContent}
+            </a>
+          ) : (
+            <span className="inline-flex max-w-full items-center gap-1 text-xs text-neutral-400">
+              <MapPin className="size-3.5 shrink-0" aria-hidden />
+              {locationContent}
+            </span>
+          )}
         </div>
       ) : null}
     </div>

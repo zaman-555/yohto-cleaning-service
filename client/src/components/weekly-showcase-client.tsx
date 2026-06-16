@@ -169,6 +169,22 @@ export default function WeeklyShowcaseClient({
         return;
       }
 
+      const savedDetail = result.detail;
+      setLocalRows((prev) =>
+        prev.map((r) =>
+          r.id === cellTarget.rowId
+            ? {
+                ...r,
+                [cellTarget.column]: {
+                  id: savedDetail.id,
+                  date: savedDetail.date,
+                  text: savedDetail.text,
+                },
+              }
+            : r
+        )
+      );
+
       setCellDialogOpen(false);
       setCellTarget(null);
       router.refresh();
@@ -204,7 +220,8 @@ export default function WeeklyShowcaseClient({
     >
       <WeeklyWeekPagination year={year} weekNumber={weekNumber} />
 
-      <div className="flex flex-wrap items-center gap-3">
+      {canManageWeeklyRows ? (
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
             variant="outline"
@@ -221,16 +238,13 @@ export default function WeeklyShowcaseClient({
             <Plus className="mr-1.5 size-4" aria-hidden />
             Add row
           </Button>
-          {!canManageWeeklyRows ? (
-            <span className="text-xs text-neutral-500">
-              Only admins can add rows.
-            </span>
-          ) : !canAddRow && rows.length > 0 ? (
+          {!canAddRow && rows.length > 0 ? (
             <span className="text-xs text-neutral-500">
               Fill at least one cell in the bottom row to add another.
             </span>
           ) : null}
         </div>
+      ) : null}
 
         <div className="overflow-hidden border border-neutral-800 bg-neutral-900 shadow-2xl backdrop-blur-sm">
           <div className="overflow-x-auto">

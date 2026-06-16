@@ -3,7 +3,7 @@ import { isValidTransportType } from '../constants/task';
 import { isValidTaskShift, normalizeTaskShift } from '../constants/task-shift';
 import * as taskModel from '../models/task.model';
 import * as userModel from '../models/user.model';
-import { extractUrlFromLocation, isLocationFieldEmpty } from '../utils/location-url';
+import { isLocationFieldEmpty } from '../utils/location-url';
 
 function formatDateOnly(date: Date): string {
   const y = date.getUTCFullYear();
@@ -93,10 +93,6 @@ function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
   const locationTrimmed = location.trim();
   if (isLocationFieldEmpty(locationTrimmed)) {
     return { error: 'All task fields are required' as const };
-  }
-
-  if (!extractUrlFromLocation(locationTrimmed)) {
-    return { error: 'Location must include a valid URL' as const };
   }
 
   const parsedDate = parseDateOnly(date);

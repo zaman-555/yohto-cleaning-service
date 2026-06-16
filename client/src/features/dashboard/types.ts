@@ -35,7 +35,13 @@ export type TeamMember = {
   isAdmin?: boolean;
 };
 
-export type TransportType = "own car" | "company car" | "going with other";
+export type TransportType =
+  | "own car"
+  | "company car"
+  | "going with other"
+  | "bike"
+  | "public transport"
+  | "taxi";
 
 export type TaskInput = {
   date: string;

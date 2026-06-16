@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import type { DashboardUserSummaries } from "@/features/dashboard/dashboard-summary";
 import type { DashboardRow, User } from "@/features/dashboard/types";
@@ -99,8 +99,6 @@ export function DashboardDataTable({ table, users, summaries }: DashboardDataTab
     ? `${USER_MIN_REM}rem`
     : `${userColumns.length * USER_MIN_REM + (showTotHoursColumn ? TOT_HOURS_MIN_REM : 0)}rem`;
 
-  const [hoveredRowIndex, setHoveredRowIndex] = useState<number | null>(null);
-
   const leadingHeaderRef = useRef<HTMLTableRowElement>(null);
   const scrollHeaderRef = useRef<HTMLTableRowElement>(null);
   const leadingRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
@@ -142,11 +140,6 @@ export function DashboardDataTable({ table, users, summaries }: DashboardDataTab
       ref={(el) => {
         leadingRowRefs.current[index] = el;
       }}
-      className={
-        hoveredRowIndex === index ? "bg-neutral-800/50" : undefined
-      }
-      onMouseEnter={() => setHoveredRowIndex(index)}
-      onMouseLeave={() => setHoveredRowIndex(null)}
     >
       {row
         .getVisibleCells()
@@ -156,7 +149,7 @@ export function DashboardDataTable({ table, users, summaries }: DashboardDataTab
           return (
             <td
               key={cell.id}
-              className={`h-40 min-h-40 whitespace-nowrap px-1 py-2 align-middle ${leadingCellTypography(id)} ${leadingBodyClass(id)}`}
+              className={`h-40 min-h-40 whitespace-nowrap px-1 py-2 align-middle transition-colors hover:bg-neutral-800/50 ${leadingCellTypography(id)} ${leadingBodyClass(id)}`}
             >
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </td>
@@ -171,11 +164,6 @@ export function DashboardDataTable({ table, users, summaries }: DashboardDataTab
       ref={(el) => {
         scrollRowRefs.current[index] = el;
       }}
-      className={
-        hoveredRowIndex === index ? "bg-neutral-800/50" : undefined
-      }
-      onMouseEnter={() => setHoveredRowIndex(index)}
-      onMouseLeave={() => setHoveredRowIndex(null)}
     >
       {row
         .getVisibleCells()
@@ -185,7 +173,7 @@ export function DashboardDataTable({ table, users, summaries }: DashboardDataTab
           return (
             <td
               key={cell.id}
-              className={`h-40 min-h-40 whitespace-normal p-0 align-middle text-sm ${scrollBodyClass(id)}`}
+              className={`h-40 min-h-40 whitespace-normal p-0 align-middle text-sm transition-colors hover:bg-neutral-800/50 ${scrollBodyClass(id)}`}
             >
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </td>
