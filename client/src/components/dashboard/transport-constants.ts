@@ -11,27 +11,27 @@ export const TRANSPORT_TYPES = [
 
 export const TRANSPORT_TYPE_META = {
   "own car": {
-    dotClass: "bg-emerald-400",
+    dotClass: "bg-emerald-500",
     label: "Own car",
   },
   "company car": {
-    dotClass: "bg-amber-400",
+    dotClass: "bg-blue-500",
     label: "Company car",
   },
   "going with other": {
-    dotClass: "bg-violet-400",
+    dotClass: "bg-fuchsia-500",
     label: "Going with other",
   },
   bike: {
-    dotClass: "bg-sky-400",
+    dotClass: "bg-cyan-400",
     label: "Bike",
   },
   "public transport": {
-    dotClass: "bg-rose-400",
+    dotClass: "bg-rose-500",
     label: "Public transport",
   },
   taxi: {
-    dotClass: "bg-orange-400",
+    dotClass: "bg-orange-500",
     label: "Taxi",
   },
 } as const satisfies Record<TransportType, { dotClass: string; label: string }>;

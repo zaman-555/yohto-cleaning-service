@@ -32,6 +32,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -47,6 +53,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { SIDEBAR_DARK_THEME } from "./sidebar-theme";
 
 type AppSidebarProps = {
   user: CurrentUser | null;
@@ -94,7 +101,11 @@ export function AppSidebar({
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-neutral-800">
+    <Sidebar
+      collapsible="icon"
+      className="border-neutral-800"
+      style={SIDEBAR_DARK_THEME}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-1">
@@ -151,11 +162,16 @@ export function AppSidebar({
           <>
             <SidebarSeparator className="my-2 group-data-[collapsible=icon]:hidden" />
             <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-              <SidebarGroupLabel>
-                <Users className="mr-1.5" />
-                Manage users
-              </SidebarGroupLabel>
               <SidebarGroupContent>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="manage-users" className="border-b-0">
+                  <AccordionTrigger className="px-2 py-1.5 text-xs font-medium text-neutral-400 hover:text-neutral-200 hover:no-underline **:data-[slot=accordion-trigger-icon]:text-neutral-400">
+                    <span className="flex items-center">
+                      <Users className="mr-1.5 size-4" />
+                      Manage users
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-0">
               <div className="flex flex-col gap-1">
                 {manageableMembers.map((member) => {
                   const isPending = pendingApprovalIds.has(member.id);
@@ -219,6 +235,9 @@ export function AppSidebar({
                   </p>
                 )}
               </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
               </SidebarGroupContent>
             </SidebarGroup>
           </>
@@ -257,7 +276,7 @@ export function AppSidebar({
                   <span className="font-medium text-neutral-100">
                     {user?.name ?? "Account"}
                   </span>
-                  <span className="truncate text-xs font-normal text-neutral-500">
+                  <span className="truncate text-xs font-normal text-neutral-300">
                     {user?.email ?? ""}
                   </span>
                   {user?.isAdmin && (
