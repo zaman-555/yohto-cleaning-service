@@ -286,6 +286,7 @@ export default function WeeklyShowcaseClient({
                           <WeeklyTaskDetailCell
                             detail={row[col.key]}
                             canEdit={canManageWeeklyRows}
+                            enableLink={col.key !== "weekdayDate"}
                             onOpenEdit={() =>
                               openCellDialog(
                                 {

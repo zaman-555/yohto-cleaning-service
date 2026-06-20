@@ -1,13 +1,15 @@
-import { CirclePlus, Pencil } from "lucide-react";
+import { CirclePlus, FileText, Pencil } from "lucide-react";
 import { RichTextContent } from "@/components/ui/rich-text-content";
 import { cn } from "@/lib/utils";
-import { hasRichTextContent } from "@/lib/rich-text";
+import { extractRichTextLink, hasRichTextContent } from "@/lib/rich-text";
 import type { TaskDetail } from "@/features/dashboard/weekly-showcase-types";
 
 type WeeklyTaskDetailCellProps = {
   detail: TaskDetail;
   className?: string;
   canEdit?: boolean;
+  /** When false (e.g. the weekday column), links are never rendered as a file chip. */
+  enableLink?: boolean;
   onOpenEdit: () => void;
 };
 
@@ -19,9 +21,11 @@ export function WeeklyTaskDetailCell({
   detail,
   className,
   canEdit = true,
+  enableLink = true,
   onOpenEdit,
 }: WeeklyTaskDetailCellProps) {
   const hasData = cellHasData(detail);
+  const link = enableLink && hasData ? extractRichTextLink(detail.text) : null;
 
   if (!hasData) {
     if (!canEdit) {
@@ -70,10 +74,32 @@ export function WeeklyTaskDetailCell({
         className
       )}
     >
-      <RichTextContent
-        html={detail.text}
-        className="w-full text-center text-sm leading-relaxed text-neutral-100"
-      />
+      {link ? (
+        <a
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={link.label}
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "inline-flex max-w-full items-center gap-2 rounded-md border border-neutral-600 bg-neutral-800/70 px-2.5 py-1.5",
+            "transition-colors hover:border-indigo-400 hover:bg-neutral-800",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+          )}
+        >
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-red-600 text-white">
+            <FileText className="size-3" strokeWidth={2} aria-hidden />
+          </span>
+          <span className="truncate text-xs font-medium text-neutral-100">
+            {link.label}
+          </span>
+        </a>
+      ) : (
+        <RichTextContent
+          html={detail.text}
+          className="w-full text-center text-sm leading-relaxed text-neutral-100"
+        />
+      )}
 
       {canEdit ? (
         <button
