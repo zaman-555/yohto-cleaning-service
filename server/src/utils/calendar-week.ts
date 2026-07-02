@@ -51,12 +51,22 @@ function parseDayOfWeek(label: string): number | null {
   return map[first] ?? null;
 }
 
+/** Strip assigned user names from a `weekdayDate` cell (client uses ` · `). */
+function stripWeekdayDateUserSuffix(label: string): string {
+  const sep = ' · ';
+  const idx = label.indexOf(sep);
+  if (idx === -1) {
+    return label;
+  }
+  return label.slice(0, idx).trim();
+}
+
 export function resolveTaskDetailDate(
   year: number,
   weekNum: number,
   weekdayLabel: string,
 ): { date: Date } | { error: string } {
-  const trimmed = weekdayLabel.trim();
+  const trimmed = stripWeekdayDateUserSuffix(weekdayLabel.trim());
   if (!trimmed || trimmed === '—') {
     return {
       error:

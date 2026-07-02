@@ -3,6 +3,7 @@ import { RichTextContent } from "@/components/ui/rich-text-content";
 import { cn } from "@/lib/utils";
 import { extractRichTextLink, hasRichTextContent } from "@/lib/rich-text";
 import type { TaskDetail } from "@/features/dashboard/weekly-showcase-types";
+import { WeeklyWeekdayDateCell } from "./weekly-weekday-date-cell";
 
 type WeeklyTaskDetailCellProps = {
   detail: TaskDetail;
@@ -10,6 +11,8 @@ type WeeklyTaskDetailCellProps = {
   canEdit?: boolean;
   /** When false (e.g. the weekday column), links are never rendered as a file chip. */
   enableLink?: boolean;
+  isWeekdayDate?: boolean;
+  contentAlign?: "left" | "center";
   onOpenEdit: () => void;
 };
 
@@ -22,8 +25,21 @@ export function WeeklyTaskDetailCell({
   className,
   canEdit = true,
   enableLink = true,
+  isWeekdayDate = false,
+  contentAlign = "left",
   onOpenEdit,
 }: WeeklyTaskDetailCellProps) {
+  if (isWeekdayDate) {
+    return (
+      <WeeklyWeekdayDateCell
+        text={detail.text}
+        className={className}
+        canEdit={canEdit}
+        onOpenEdit={onOpenEdit}
+      />
+    );
+  }
+
   const hasData = cellHasData(detail);
   const link = enableLink && hasData ? extractRichTextLink(detail.text) : null;
 
@@ -32,7 +48,8 @@ export function WeeklyTaskDetailCell({
       return (
         <div
           className={cn(
-            "group/cell flex min-h-[4.5rem] w-full items-center justify-center p-3 text-neutral-600",
+            "group/cell flex min-h-[5rem] w-full items-center p-3 text-neutral-600",
+            contentAlign === "center" ? "justify-center text-center" : "justify-start text-left",
             className
           )}
         >
@@ -44,7 +61,8 @@ export function WeeklyTaskDetailCell({
     return (
       <div
         className={cn(
-          "group/cell flex min-h-[4.5rem] w-full items-center justify-center p-3",
+          "group/cell flex min-h-[5rem] w-full items-center p-3",
+          contentAlign === "center" ? "justify-center" : "justify-start",
           className
         )}
       >
@@ -70,7 +88,8 @@ export function WeeklyTaskDetailCell({
   return (
     <div
       className={cn(
-        "group/cell relative flex min-h-[4.5rem] w-full items-center justify-center px-8 py-3",
+        "group/cell relative flex min-h-[5rem] w-full items-center px-10 py-3",
+        contentAlign === "center" ? "justify-center text-center" : "justify-start text-left",
         className
       )}
     >
@@ -97,7 +116,10 @@ export function WeeklyTaskDetailCell({
       ) : (
         <RichTextContent
           html={detail.text}
-          className="w-full text-center text-sm leading-relaxed text-neutral-100"
+          className={cn(
+            "w-full text-sm leading-relaxed text-neutral-100",
+            contentAlign === "center" ? "text-center" : "text-left"
+          )}
         />
       )}
 

@@ -9,7 +9,13 @@ import { WeeklyWeekPagination } from "@/components/dashboard/weekly-week-paginat
 import { useDashboardShell } from "@/components/dashboard/use-dashboard-shell";
 import { WeeklyCellDialog } from "@/components/dashboard/weekly-cell-dialog";
 import { WeeklyTaskDetailCell } from "@/components/dashboard/weekly-task-detail-cell";
-import { normalizeWeekdaySelection } from "@/components/dashboard/weekly-weekday-picker";
+import {
+  extractWeekdayLabelForDate,
+  formatWeekdayDateCellText,
+  matchStoredUserNamesToIds,
+  parseWeekdayDateCellText,
+  userIdsToLastNames,
+} from "@/components/dashboard/weekly-weekday-picker";
 import { Button } from "@/components/ui/button";
 import { isRichTextEmpty } from "@/lib/rich-text";
 import { upsertWeeklyTaskDetail } from "@/features/dashboard/actions";
@@ -52,6 +58,7 @@ export default function WeeklyShowcaseClient({
   const [cellDialogOpen, setCellDialogOpen] = useState(false);
   const [cellTarget, setCellTarget] = useState<CellEditTarget | null>(null);
   const [cellText, setCellText] = useState("");
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [cellError, setCellError] = useState<string | null>(null);
   const [isSavingCell, setIsSavingCell] = useState(false);
   const [localRows, setLocalRows] = useState<WeeklyShowcaseRow[]>(() =>
@@ -104,14 +111,17 @@ export default function WeeklyShowcaseClient({
       setCellTarget(target);
       if (target.column === "weekdayDate") {
         const raw = detail.text === "—" ? "" : detail.text;
-        setCellText(normalizeWeekdaySelection(raw));
+        const parsed = parseWeekdayDateCellText(raw);
+        setCellText(parsed.weekday);
+        setSelectedUserIds(matchStoredUserNamesToIds(parsed.userNames, users));
       } else {
         setCellText(detail.text === "—" ? "" : detail.text);
+        setSelectedUserIds([]);
       }
       setCellError(null);
       setCellDialogOpen(true);
     },
-    []
+    [users]
   );
 
   const handleCellDialogOpenChange = useCallback((open: boolean) => {
@@ -119,6 +129,7 @@ export default function WeeklyShowcaseClient({
     if (!open) {
       setCellTarget(null);
       setCellError(null);
+      setSelectedUserIds([]);
       setIsSavingCell(false);
     }
   }, []);
@@ -129,9 +140,12 @@ export default function WeeklyShowcaseClient({
       if (!cellTarget) return;
 
       const isWeekdayColumn = cellTarget.column === "weekdayDate";
-      const textToSave = isWeekdayColumn ? cellText.trim() : cellText;
+      const weekdayValue = cellText.trim();
+      const textToSave = isWeekdayColumn
+        ? formatWeekdayDateCellText(weekdayValue, userIdsToLastNames(selectedUserIds, users))
+        : cellText;
 
-      if (isWeekdayColumn ? !textToSave : isRichTextEmpty(textToSave)) {
+      if (isWeekdayColumn ? !weekdayValue : isRichTextEmpty(textToSave)) {
         setCellError(
           isWeekdayColumn
             ? "Please select a day of the week."
@@ -141,14 +155,9 @@ export default function WeeklyShowcaseClient({
       }
 
       const row = localRows.find((r) => r.id === cellTarget.rowId);
-      const weekdayLabel =
-        isWeekdayColumn
-          ? textToSave
-          : (() => {
-              const t = row?.weekdayDate.text?.trim() ?? "";
-              if (!t || t === "—") return "";
-              return t;
-            })();
+      const weekdayLabel = isWeekdayColumn
+        ? weekdayValue
+        : extractWeekdayLabelForDate(row?.weekdayDate.text?.trim() ?? "");
 
       setIsSavingCell(true);
       setCellError(null);
@@ -189,7 +198,7 @@ export default function WeeklyShowcaseClient({
       setCellTarget(null);
       router.refresh();
     },
-    [cellTarget, cellText, localRows, year, router]
+    [cellTarget, cellText, selectedUserIds, users, localRows, year, router]
   );
 
   if (loading) {
@@ -248,18 +257,11 @@ export default function WeeklyShowcaseClient({
 
         <div className="overflow-hidden border border-neutral-800 bg-neutral-900 shadow-2xl backdrop-blur-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[68rem] border-separate border-spacing-0 text-center text-sm">
-              <thead className="bg-neutral-950/50">
+            <table className="w-full min-w-[88rem] border-separate border-spacing-0 text-sm">
+              <thead>
                 <tr>
-                  {WEEKLY_SHOWCASE_COLUMNS.map((col, i) => (
-                    <th
-                      key={col.key}
-                      className={
-                        i === 0
-                          ? "border-b border-l border-r border-t border-neutral-600 px-3 py-3 text-center font-semibold leading-snug text-neutral-300"
-                          : "border-b border-r border-t border-neutral-600 px-3 py-3 text-center font-semibold leading-snug text-neutral-300"
-                      }
-                    >
+                  {WEEKLY_SHOWCASE_COLUMNS.map((col) => (
+                    <th key={col.key} className={col.thClass}>
                       {col.label}
                     </th>
                   ))}
@@ -287,6 +289,8 @@ export default function WeeklyShowcaseClient({
                             detail={row[col.key]}
                             canEdit={canManageWeeklyRows}
                             enableLink={col.key !== "weekdayDate"}
+                            isWeekdayDate={col.key === "weekdayDate"}
+                            contentAlign={col.contentAlign}
                             onOpenEdit={() =>
                               openCellDialog(
                                 {
@@ -325,6 +329,9 @@ export default function WeeklyShowcaseClient({
           inputVariant={cellTarget?.column === "weekdayDate" ? "weekday" : "text"}
           textValue={cellText}
           onTextChange={setCellText}
+          users={users}
+          selectedUserIds={selectedUserIds}
+          onSelectedUserIdsChange={setSelectedUserIds}
           error={cellError}
           isSubmitting={isSavingCell}
           onSubmit={handleCellSubmit}
