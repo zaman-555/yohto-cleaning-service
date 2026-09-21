@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   CalendarDays,
   ChevronsUpDown,
   ClipboardList,
@@ -73,6 +74,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Main dashboard", icon: LayoutDashboard },
   { href: "/weekly", label: "Weekly showcase", icon: CalendarDays },
   { href: "/my-tasks", label: "My work", adminLabel: "Staffs", icon: ClipboardList },
+  { href: "/kpi", label: "Staff KPI", icon: BarChart3, adminOnly: true },
 ] as const;
 
 function initials(name: string) {
@@ -171,6 +173,9 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">
               {NAV_ITEMS.map((item) => {
+                if ("adminOnly" in item && item.adminOnly && !user?.isAdmin) {
+                  return null;
+                }
                 const active = pathname === item.href;
                 const Icon = item.icon;
                 const label =

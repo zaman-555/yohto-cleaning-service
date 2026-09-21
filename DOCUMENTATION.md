@@ -1,6 +1,7 @@
 # Yohto Dashboard — Application Guide
 
-> **Customer-facing overview:** see [PRODUCT.md](./PRODUCT.md) for product details, features, cost, step-by-step guides, and user flexibility.
+> **Customer-facing overview:** see [PRODUCT.md](./PRODUCT.md) for product details.  
+> **Client sales pack:** [CLIENT-OVERVIEW.md](./CLIENT-OVERVIEW.md) (features + light stack) · [PRODUCT-ONE-PAGER.md](./PRODUCT-ONE-PAGER.md) · [PRODUCT-SALES.md](./PRODUCT-SALES.md)
 
 Yohto Dashboard is an internal **workforce scheduling and job planning tool** for a cleaning service ("Yohto"). Admins schedule employee work across a monthly calendar grid and maintain a detailed weekly job showcase. Employees self-register, get approved by an admin, and then view their assignments.
 

@@ -5,7 +5,6 @@ import {
   isRichTextEmpty,
   looksLikeHtml,
 } from "@/lib/rich-text";
-import { isCalendarToday } from "@/features/dashboard/month-utils";
 import type { TaskRecord } from "@/features/dashboard/types";
 import { TransportTypeDot } from "./transport-type-dot";
 import { transportTypeMeta } from "./transport-constants";
@@ -16,6 +15,11 @@ type MyTaskCardProps = {
   task: TaskRecord;
   /** Shown for admins when browsing all team cards. */
   workerName?: string;
+  /**
+   * Admin: plain border.
+   * Staff My work: border colour matches the task transport type.
+   */
+  variant?: "admin" | "staff";
 };
 
 function formatTaskDateLabel(isoDate: string): string {
@@ -28,29 +32,18 @@ function formatTaskDateLabel(isoDate: string): string {
   const day = Number(match[3]);
   const date = new Date(year, month - 1, day);
   return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
+    weekday: "long",
+    month: "long",
     day: "numeric",
+    year: "numeric",
   });
 }
 
-function parseIsoParts(isoDate: string): { year: number; month: number; day: number } | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate);
-  if (!match) {
-    return null;
-  }
-  return {
-    year: Number(match[1]),
-    month: Number(match[2]),
-    day: Number(match[3]),
-  };
-}
-
-export function MyTaskCard({ task, workerName }: MyTaskCardProps) {
-  const parts = parseIsoParts(task.date);
-  const isToday = parts
-    ? isCalendarToday(parts.year, parts.month, parts.day)
-    : false;
+export function MyTaskCard({
+  task,
+  workerName,
+  variant = "staff",
+}: MyTaskCardProps) {
   const transport = transportTypeMeta(task.transportType);
   const locationHref = extractUrlFromRichText(task.location);
   const hasLocation = !isRichTextEmpty(task.location);
@@ -59,23 +52,26 @@ export function MyTaskCard({ task, workerName }: MyTaskCardProps) {
   ) : (
     <span className="truncate">{locationHref ? "Location" : task.location}</span>
   );
+  const isStaff = variant === "staff";
 
   return (
     <article
       className={cn(
-        "flex min-w-0 flex-col rounded-xl border border-border bg-card p-4 text-left shadow-sm",
-        isToday && "bg-muted/60 dark:bg-muted/40"
+        "flex min-w-0 flex-col rounded-xl bg-card p-4 text-left shadow-sm",
+        isStaff
+          ? cn("border-2", transport.borderClass)
+          : "border border-border"
       )}
     >
       <header className="mb-3 flex items-start justify-between gap-3 border-b border-border pb-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           {workerName ? (
             <p className="mb-1 text-xs font-medium text-muted-foreground">{workerName}</p>
           ) : null}
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-sm font-semibold leading-snug text-foreground">
             {formatTaskDateLabel(task.date)}
           </p>
-          <p className="mt-0.5 text-xs font-semibold tracking-wide text-indigo-600 dark:text-indigo-300">
+          <p className="mt-0.5 text-xs font-semibold tracking-wide text-muted-foreground">
             {formatShiftLabel(task.shift)}
           </p>
         </div>

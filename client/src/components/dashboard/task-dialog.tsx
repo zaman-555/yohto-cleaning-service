@@ -143,13 +143,15 @@ export function TaskDialog({
                         onTaskFormChange((prev) => ({ ...prev, transportType: t }))
                       }
                       className={cn(
-                        "rounded-full p-1 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                        selected &&
-                          "ring-2 ring-indigo-400 ring-offset-2 ring-offset-background"
+                        "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        meta.borderClass,
+                        selected
+                          ? "bg-muted font-medium text-foreground ring-2 ring-indigo-400 ring-offset-2 ring-offset-background"
+                          : "bg-background text-muted-foreground hover:bg-muted/60"
                       )}
                     >
-                      <span className={cn("block size-3 rounded-full", meta.dotClass)} />
-                      <span className="sr-only">{meta.label}</span>
+                      <span className={cn("block size-2.5 rounded-full", meta.dotClass)} />
+                      <span>{meta.label}</span>
                     </button>
                   );
                 })}
