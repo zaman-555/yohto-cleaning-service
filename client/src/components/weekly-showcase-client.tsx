@@ -499,7 +499,7 @@ export default function WeeklyShowcaseClient({
           className="overflow-hidden border border-border bg-card shadow-sm"
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[88rem] border-separate border-spacing-0 text-sm">
+            <table className="w-full min-w-[122rem] table-fixed border-separate border-spacing-0 text-sm">
               <thead>
                 <tr>
                   {columns.map((col) => (
@@ -542,11 +542,12 @@ export default function WeeklyShowcaseClient({
                       className="group transition-colors hover:bg-muted/50"
                     >
                       {columns.map((col) => (
-                        <td key={col.key} className={`${col.tdClass} h-px`}>
+                        <td key={col.key} className={`${col.tdClass}`}>
                           <WeeklyTaskDetailCell
                             detail={getWeeklyRowCell(row, col.key)}
                             canEdit={canManageWeeklyRows}
                             enableLink={col.key !== "weekdayDate"}
+                            isInstructions={col.key === "instructions"}
                             isWeekdayDate={col.key === "weekdayDate"}
                             contentAlign={col.contentAlign}
                             onOpenEdit={() =>
@@ -584,7 +585,13 @@ export default function WeeklyShowcaseClient({
               ? `Row ${cellTarget.rowId}. Saving writes to the database.`
               : undefined
           }
-          inputVariant={cellTarget?.column === "weekdayDate" ? "weekday" : "text"}
+          inputVariant={
+            cellTarget?.column === "weekdayDate"
+              ? "weekday"
+              : cellTarget?.column === "instructions"
+                ? "instructions"
+                : "text"
+          }
           textValue={cellText}
           onTextChange={setCellText}
           users={users}

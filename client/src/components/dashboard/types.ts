@@ -1,5 +1,6 @@
 import type {
   DashboardRow,
+  ScheduleMonthVisibility,
   TaskRecord,
   TeamMember,
   User,
@@ -13,6 +14,10 @@ export type DashboardClientProps = {
   initialTeamMembers: TeamMember[];
   users: User[];
   initialTasks: TaskRecord[];
+  initialYearTasks: TaskRecord[];
+  initialCompanySearch?: string;
+  initialMonthVisibility: ScheduleMonthVisibility;
+  initialDashboardStaffOrder: number[];
 };
 
 export type SelectedTaskUserState = {

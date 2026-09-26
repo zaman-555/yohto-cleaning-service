@@ -1,17 +1,24 @@
 import DashboardClient from "../components/dashboard-client";
 import {
   fetchApprovedTeamMembers,
+  fetchDashboardStaffOrder,
+  fetchScheduleMonthVisibility,
   fetchTasksForMonth,
+  fetchTasksForYear,
   fetchTeamMembers,
 } from "@/features/dashboard/server";
-import { formatCalendarMonthLabel, resolveMonthlyPageMonth } from "@/features/dashboard/month-utils";
+import {
+  formatCalendarMonthLabel,
+  isFutureCalendarMonth,
+  resolveMonthlyPageMonth,
+} from "@/features/dashboard/month-utils";
 import { generateTableData } from "@/features/dashboard/table-data";
 import type { User } from "@/features/dashboard/types";
 
 export const dynamic = "force-dynamic";
 
 type DashboardPageProps = {
-  searchParams: Promise<{ year?: string; month?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; company?: string }>;
 };
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -19,11 +26,28 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { year, month } = resolveMonthlyPageMonth(params.year, params.month);
   const monthLabel = formatCalendarMonthLabel({ year, month });
 
-  const [teamMembers, approvedMembers, tasksForMonth] = await Promise.all([
-    fetchTeamMembers(),
-    fetchApprovedTeamMembers(),
-    fetchTasksForMonth(year, month),
-  ]);
+  const [
+    teamMembers,
+    approvedMembers,
+    tasksForMonth,
+    tasksForYear,
+    visibility,
+    dashboardStaffOrder,
+  ] =
+    await Promise.all([
+      fetchTeamMembers(),
+      fetchApprovedTeamMembers(),
+      fetchTasksForMonth(year, month),
+      fetchTasksForYear(year),
+      fetchScheduleMonthVisibility(year, month),
+      fetchDashboardStaffOrder(),
+    ]);
+  const isFuture = isFutureCalendarMonth({ year, month });
+  const monthVisibility = visibility ?? {
+    isFuture,
+    isPublished: !isFuture,
+    isVisibleToStaff: !isFuture,
+  };
   const approvedUsers: User[] = approvedMembers
     .filter((member) => !member.isAdmin)
     .map((member) => ({ id: member.id, name: member.name }));
@@ -39,6 +63,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       initialTeamMembers={teamMembers}
       users={approvedUsers}
       initialTasks={tasksForMonth}
+      initialYearTasks={tasksForYear}
+      initialCompanySearch={params.company?.slice(0, 100) ?? ""}
+      initialMonthVisibility={monthVisibility}
+      initialDashboardStaffOrder={dashboardStaffOrder}
     />
   );
 }

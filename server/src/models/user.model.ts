@@ -45,7 +45,57 @@ export async function listUsers(approvedFilter: boolean | undefined) {
   return prisma.user.findMany({
     where: approvedFilter === undefined ? undefined : { isApproved: approvedFilter },
     select: userListSelect,
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
   });
+}
+
+export async function getDashboardStaffOrder(adminUserId: number) {
+  const [admin, staff] = await prisma.$transaction([
+    prisma.user.findUnique({
+      where: { id: adminUserId },
+      select: { dashboardStaffOrder: true },
+    }),
+    prisma.user.findMany({
+      where: { isApproved: true, isAdmin: false },
+      select: { id: true },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    }),
+  ]);
+
+  if (!admin) {
+    return null;
+  }
+
+  const validIds = new Set(staff.map((user) => user.id));
+  const savedIds = admin.dashboardStaffOrder.filter((id) => validIds.has(id));
+  const savedIdSet = new Set(savedIds);
+
+  return [...savedIds, ...staff.map((user) => user.id).filter((id) => !savedIdSet.has(id))];
+}
+
+export async function setDashboardStaffOrder(adminUserId: number, staffUserIds: number[]) {
+  return prisma.user.update({
+    where: { id: adminUserId },
+    data: { dashboardStaffOrder: staffUserIds },
+    select: { id: true },
+  });
+}
+
+export async function listValidDashboardStaffIds(staffUserIds: number[]) {
+  if (staffUserIds.length === 0) {
+    return [];
+  }
+
+  const staff = await prisma.user.findMany({
+    where: {
+      id: { in: staffUserIds },
+      isApproved: true,
+      isAdmin: false,
+    },
+    select: { id: true },
+  });
+
+  return staff.map((user) => user.id);
 }
 
 export async function updateUserApproval(id: number, isApproved: boolean) {

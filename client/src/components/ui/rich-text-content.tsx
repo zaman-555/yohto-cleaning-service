@@ -4,6 +4,7 @@ import { memo, useMemo, type MouseEvent } from "react";
 import {
   handleRichTextLinkClick,
   looksLikeHtml,
+  normalizeRichTextForWrap,
   sanitizeRichTextHtml,
 } from "@/lib/rich-text";
 import { cn } from "@/lib/utils";
@@ -13,22 +14,37 @@ type RichTextContentProps = {
   className?: string;
   /** Use span wrapper for inline contexts (e.g. inside links). */
   inline?: boolean;
+  /**
+   * Weekly showcase: normalize Quill spaces and apply wrap-at-words styles
+   * so sentences break only at word boundaries.
+   */
+  wrapAtWords?: boolean;
 };
 
 function RichTextContentComponent({
   html,
   className,
   inline = false,
+  wrapAtWords = false,
 }: RichTextContentProps) {
-  const isHtml = looksLikeHtml(html);
+  const prepared = wrapAtWords ? normalizeRichTextForWrap(html) : html;
+  const isHtml = looksLikeHtml(prepared);
   const sanitized = useMemo(
-    () => (isHtml ? sanitizeRichTextHtml(html) : null),
-    [html, isHtml]
+    () => (isHtml ? sanitizeRichTextHtml(prepared) : null),
+    [prepared, isHtml]
   );
 
   if (!isHtml) {
     return (
-      <span className={cn("whitespace-pre-wrap break-words", className)}>{html}</span>
+      <span
+        className={cn(
+          "whitespace-pre-wrap [overflow-wrap:break-word] [word-break:normal]",
+          wrapAtWords && "weekly-rich-text whitespace-normal",
+          className
+        )}
+      >
+        {prepared}
+      </span>
     );
   }
 
@@ -37,7 +53,11 @@ function RichTextContentComponent({
   };
 
   const shared = {
-    className: cn("rich-text-content break-words font-normal text-inherit", className),
+    className: cn(
+      "rich-text-content font-normal text-inherit [overflow-wrap:break-word] [word-break:normal]",
+      wrapAtWords && "weekly-rich-text",
+      className
+    ),
     dangerouslySetInnerHTML: { __html: sanitized! },
     onClick,
   };

@@ -8,6 +8,14 @@ export function getCurrentCalendarMonth(): CalendarMonthRef {
   return { year: now.getFullYear(), month: now.getMonth() + 1 };
 }
 
+export function isFutureCalendarMonth(ref: CalendarMonthRef): boolean {
+  const current = getCurrentCalendarMonth();
+  return (
+    ref.year > current.year ||
+    (ref.year === current.year && ref.month > current.month)
+  );
+}
+
 export function resolveMonthlyPageMonth(
   yearParam: string | undefined,
   monthParam: string | undefined

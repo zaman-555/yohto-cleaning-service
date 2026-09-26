@@ -9,7 +9,12 @@ import {
   type WeeklyShowcaseColumnKey,
   type WeeklyShowcaseHeaderStyle,
 } from "@/features/dashboard/weekly-showcase-types";
-import type { TaskInput, TaskUpdateBody, TeamMember } from "./types";
+import type {
+  ScheduleMonthVisibility,
+  TaskInput,
+  TaskUpdateBody,
+  TeamMember,
+} from "./types";
 
 export async function fetchTeamMembersAction(): Promise<TeamMember[] | null> {
   try {
@@ -42,6 +47,72 @@ export async function updateUserApproval(userId: number, isApproved: boolean): P
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+export type UpdateDashboardStaffOrderResult =
+  | { ok: true; staffUserIds: number[] }
+  | { ok: false; error: string };
+
+export async function updateDashboardStaffOrder(
+  staffUserIds: number[]
+): Promise<UpdateDashboardStaffOrderResult> {
+  try {
+    const authHeaders = await getServerAuthHeaders();
+    const response = await fetch(serverApiUrl("/api/users/me/dashboard-staff-order"), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...authHeaders },
+      body: JSON.stringify({ staffUserIds }),
+      cache: "no-store",
+    });
+    const data = (await response.json().catch(() => null)) as
+      | { staffUserIds?: number[]; error?: string }
+      | null;
+
+    if (!response.ok || !data?.staffUserIds) {
+      return { ok: false, error: data?.error ?? "Failed to save staff column order." };
+    }
+
+    return { ok: true, staffUserIds: data.staffUserIds };
+  } catch {
+    return { ok: false, error: "Request failed. Please check the backend connection." };
+  }
+}
+
+export async function updateScheduleMonthVisibility(
+  year: number,
+  month: number,
+  isPublished: boolean
+): Promise<
+  | { ok: true; visibility: ScheduleMonthVisibility }
+  | { ok: false; error: string }
+> {
+  try {
+    const authHeaders = await getServerAuthHeaders();
+    const response = await fetch(
+      serverApiUrl(`/api/tasks/month-visibility?year=${year}&month=${month}`),
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ isPublished }),
+        cache: "no-store",
+      }
+    );
+    const data = (await response.json().catch(() => null)) as
+      | (ScheduleMonthVisibility & { error?: string })
+      | null;
+    if (!response.ok || !data) {
+      return {
+        ok: false,
+        error: data?.error ?? "Failed to update schedule visibility.",
+      };
+    }
+    return { ok: true, visibility: data };
+  } catch {
+    return {
+      ok: false,
+      error: "Request failed. Please check the backend connection.",
+    };
   }
 }
 

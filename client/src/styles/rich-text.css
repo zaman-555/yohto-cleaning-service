@@ -22,8 +22,10 @@
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.5;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  /* Prefer wrapping at spaces; only break long tokens (URLs) if needed */
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
 }
 
 /* Tailwind preflight resets headings — restore in editor + display */
@@ -74,12 +76,37 @@
   margin-block: 0.25em;
 }
 
+/* Separate consecutive paragraphs (Enter in the editor) so each sentence/line is clear */
+.rich-text-content p + p {
+  margin-top: 0.35em;
+}
+
 .rich-text-content {
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.5;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  /* Prefer wrapping at spaces; only break long tokens (URLs) if needed */
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+
+/*
+ * Weekly showcase cells: keep sentences readable — wrap only at spaces,
+ * never mid-word, and never leave Quill &nbsp; / nowrap forcing odd breaks.
+ */
+.weekly-rich-text,
+.weekly-rich-text p,
+.weekly-rich-text span,
+.weekly-rich-text strong,
+.weekly-rich-text em,
+.weekly-rich-text u,
+.weekly-rich-text s,
+.weekly-rich-text a {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: none !important;
 }
 
 .rich-text-content a {

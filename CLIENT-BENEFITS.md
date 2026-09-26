@@ -20,7 +20,7 @@ Related: [CLIENT-OVERVIEW.md](./CLIENT-OVERVIEW.md) · [PRODUCT-ONE-PAGER.md](./
 |----------------------------|----------------------|
 | Spreadsheet is hard to read on a phone | **My work** shows only that person’s jobs as clear cards |
 | Many people edit the same sheet — mistakes and overwrites | Each change saves to the **database**; one source of truth |
-| Staff ask “where do I go?” in WhatsApp | Shift, company, task, car, transport, and **map link** in one place |
+| Staff ask “where do I go?” in WhatsApp | Shift, company, task, car, status, and **map link** in one place |
 | Site details (keys, alarm, equipment) live in another tab or message | **Weekly showcase** holds the week’s instructions with columns you can customize |
 | Counting hours for payroll takes time | Hours are calculated from shift times — daily totals, monthly per person, **Staff KPI** chart |
 | New people need Google access or a shared password | Staff **register**; admin **approves**; each person has their own login |
@@ -34,8 +34,8 @@ Related: [CLIENT-OVERVIEW.md](./CLIENT-OVERVIEW.md) · [PRODUCT-ONE-PAGER.md](./
 ### Field staff
 - Open the app on their phone — no App Store install.
 - See **today’s** and this month’s jobs under **My work**.
-- Know shift time, site/task, vehicle, transport, and location without asking the office.
-- Border colour matches transport type so jobs are easy to scan.
+- Know shift time, site/task, vehicle, status, and location without asking the office.
+- Border colour matches status type so jobs are easy to scan.
 
 ### Schedulers / admins
 - Plan the whole month on one **Main dashboard** (day × person) — same idea as their monthly sheet, but structured.
@@ -64,7 +64,7 @@ Clients often already use a coloured Google Sheet (green = normal job, orange = 
 | Spreadsheet | Extra Team app |
 |-------------|----------------|
 | Fast free-text for planners who live in Sheets | Structured fields → reliable phone view and hour maths |
-| Colours mean job/site/status | Colours mean **transport**; jobs use company + task fields |
+| Colours mean job/site/status | Colours mean **status type** (PCS Driving, Vacation, Sick leave, etc.) |
 | Hard for field staff on mobile | Built for phone (**My work**) |
 | Sharing = Google permissions | Real accounts + password reset |
 | Formulas can break | Hours come from shift start–end automatically |

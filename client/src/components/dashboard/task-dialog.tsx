@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import type { TaskInput } from "@/features/dashboard/types";
+import { isLeaveTransportType, type TaskInput } from "@/features/dashboard/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +47,8 @@ export function TaskDialog({
   isSubmittingTask,
   onSubmit,
 }: TaskDialogProps) {
+  const isLeave = isLeaveTransportType(taskForm.transportType);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
@@ -76,58 +78,12 @@ export function TaskDialog({
               </p>
             </div>
 
-            <TimeRangePicker
-              idPrefix="task-shift"
-              value={taskShift}
-              onChange={onTaskShiftChange}
-              disabled={isSubmittingTask}
-            />
-
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input
-                id="companyName"
-                required
-                value={taskForm.companyName}
-                onChange={(e) =>
-                  onTaskFormChange((prev) => ({ ...prev, companyName: e.target.value }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="taskText">Task</Label>
-              {open ? (
-                <RichTextEditorLazy
-                  id="taskText"
-                  value={taskForm.task}
-                  onChange={(task) =>
-                    onTaskFormChange((prev) => ({ ...prev, task }))
-                  }
-                  placeholder="Describe the task"
-                  disabled={isSubmittingTask}
-                />
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="carName">Car Name</Label>
-              <Input
-                id="carName"
-                required
-                value={taskForm.carName}
-                onChange={(e) =>
-                  onTaskFormChange((prev) => ({ ...prev, carName: e.target.value }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label id="transport-type-label">Transport</Label>
+              <Label id="transport-type-label">Status</Label>
               <div
                 role="radiogroup"
                 aria-labelledby="transport-type-label"
-                className="flex flex-wrap items-center gap-3"
+                className="flex flex-wrap items-center gap-2"
               >
                 {TRANSPORT_TYPES.map((t) => {
                   const meta = TRANSPORT_TYPE_META[t];
@@ -140,7 +96,20 @@ export function TaskDialog({
                       aria-checked={selected}
                       title={meta.label}
                       onClick={() =>
-                        onTaskFormChange((prev) => ({ ...prev, transportType: t }))
+                        onTaskFormChange((prev) => {
+                          if (prev.transportType === t) return prev;
+                          if (isLeaveTransportType(t)) {
+                            return { ...prev, transportType: t, task: t };
+                          }
+                          const clearLeaveLabel =
+                            isLeaveTransportType(prev.transportType) &&
+                            prev.task.trim() === prev.transportType;
+                          return {
+                            ...prev,
+                            transportType: t,
+                            task: clearLeaveLabel ? "" : prev.task,
+                          };
+                        })
                       }
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -158,23 +127,89 @@ export function TaskDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="location">Location URL</Label>
-              {open ? (
-                <RichTextEditorLazy
-                  id="location"
-                  value={taskForm.location}
-                  onChange={(location) =>
-                    onTaskFormChange((prev) => ({ ...prev, location }))
+            {isLeave ? (
+              <div className="space-y-2">
+                <Label htmlFor="taskText">Task</Label>
+                <Input
+                  id="taskText"
+                  required
+                  value={taskForm.task}
+                  disabled={isSubmittingTask}
+                  onChange={(e) =>
+                    onTaskFormChange((prev) => ({ ...prev, task: e.target.value }))
                   }
-                  placeholder="https://example.com/location"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Filled from the status. Edit it if you need a short note, then save.
+                </p>
+              </div>
+            ) : (
+              <>
+                <TimeRangePicker
+                  idPrefix="task-shift"
+                  value={taskShift}
+                  onChange={onTaskShiftChange}
                   disabled={isSubmittingTask}
                 />
-              ) : null}
-              <p className="text-xs text-muted-foreground">
-                Enter a URL or use the link tool; formatting and colors are saved with the task.
-              </p>
-            </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    required
+                    value={taskForm.companyName}
+                    onChange={(e) =>
+                      onTaskFormChange((prev) => ({ ...prev, companyName: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="taskText">Task</Label>
+                  {open ? (
+                    <RichTextEditorLazy
+                      id="taskText"
+                      value={taskForm.task}
+                      onChange={(task) =>
+                        onTaskFormChange((prev) => ({ ...prev, task }))
+                      }
+                      placeholder="Describe the task"
+                      disabled={isSubmittingTask}
+                    />
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="carName">Car Name</Label>
+                  <Input
+                    id="carName"
+                    required
+                    value={taskForm.carName}
+                    onChange={(e) =>
+                      onTaskFormChange((prev) => ({ ...prev, carName: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location URL</Label>
+                  {open ? (
+                    <RichTextEditorLazy
+                      id="location"
+                      value={taskForm.location}
+                      onChange={(location) =>
+                        onTaskFormChange((prev) => ({ ...prev, location }))
+                      }
+                      placeholder="https://example.com/location"
+                      disabled={isSubmittingTask}
+                    />
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    Enter a URL or use the link tool; formatting and colors are saved with the task.
+                  </p>
+                </div>
+              </>
+            )}
 
             {taskSubmitError ? (
               <p className="text-sm text-destructive">{taskSubmitError}</p>

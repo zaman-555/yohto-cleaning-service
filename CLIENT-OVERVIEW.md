@@ -37,7 +37,7 @@ Built for cleaning and field-service companies, and suitable for any team that s
 ### Main dashboard — monthly planning board
 - Full month view: **each day × each team member**
 - Per job: shift time, company, task description, vehicle, transport type, location (text or map link)
-- Colour indicators for transport (own car, company car, bike, public transport, taxi, etc.)
+- Colour indicators for status (Start from PCS Driving, Start from Customer, Paid Holiday, Vacation, Sick leave, etc.)
 - **Today’s row** lightly highlighted so everyone finds the current day quickly
 - Automatic summaries: hours per person (month), average per week, total hours per day
 - Easy month navigation (past and future)

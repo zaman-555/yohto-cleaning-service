@@ -8,6 +8,12 @@ export type Availability = {
   available: boolean;
 };
 
+export type ScheduleMonthVisibility = {
+  isFuture: boolean;
+  isPublished: boolean;
+  isVisibleToStaff: boolean;
+};
+
 export type DashboardRow = {
   id: number;
   dateNum: number;
@@ -36,12 +42,27 @@ export type TeamMember = {
 };
 
 export type TransportType =
-  | "own car"
-  | "company car"
-  | "going with other"
-  | "bike"
-  | "public transport"
-  | "taxi";
+  | "Start from PCS Driving"
+  | "Start from Customer"
+  | "Paid Holiday"
+  | "Start from PCS"
+  | "Vacation"
+  | "Sick leave"
+  | "Unpaid off";
+
+/** Statuses that save with only a task label — no shift, company, car, or location. */
+export const LEAVE_TRANSPORT_TYPES = [
+  "Paid Holiday",
+  "Sick leave",
+  "Vacation",
+  "Unpaid off",
+] as const satisfies readonly TransportType[];
+
+export function isLeaveTransportType(
+  value: string
+): value is (typeof LEAVE_TRANSPORT_TYPES)[number] {
+  return (LEAVE_TRANSPORT_TYPES as readonly string[]).includes(value);
+}
 
 export type TaskInput = {
   date: string;

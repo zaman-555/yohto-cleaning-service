@@ -57,6 +57,10 @@ const WEEKLY_TH_BASE =
 
 const TD_BORDER = "border-border";
 
+/** Prefer wrapping at word spaces; only break long tokens (URLs) if needed. */
+const TD_WRAP =
+  "align-top whitespace-normal [overflow-wrap:break-word] [word-break:normal]";
+
 const TD_LAYOUT: Record<
   BuiltInWeeklyColumnKey,
   {
@@ -68,66 +72,66 @@ const TD_LAYOUT: Record<
   }
 > = {
   title: {
-    thMinWidthClass: "min-w-[11rem]",
-    tdMinWidthClass: "min-w-[11rem]",
-    tdClass: `border-b border-l border-r ${TD_BORDER} p-0 align-top text-foreground`,
+    thMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdClass: `border-b border-l border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
     contentAlign: "left",
     isFirst: true,
   },
   weekdayDate: {
-    thMinWidthClass: "min-w-[10rem]",
-    tdMinWidthClass: "min-w-[10rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-muted-foreground`,
+    thMinWidthClass: "w-[11rem] min-w-[11rem]",
+    tdMinWidthClass: "w-[11rem] min-w-[11rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 text-muted-foreground ${TD_WRAP}`,
     contentAlign: "center",
   },
   customer: {
-    thMinWidthClass: "min-w-[11rem]",
-    tdMinWidthClass: "min-w-[11rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-foreground`,
+    thMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
     contentAlign: "left",
   },
   pointOfBusiness: {
-    thMinWidthClass: "min-w-[14rem]",
-    tdMinWidthClass: "min-w-[14rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-foreground`,
+    thMinWidthClass: "w-[16rem] min-w-[16rem]",
+    tdMinWidthClass: "w-[16rem] min-w-[16rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
     contentAlign: "left",
   },
   keysSandra: {
-    thMinWidthClass: "min-w-[11rem]",
-    tdMinWidthClass: "min-w-[11rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-foreground`,
+    thMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
     contentAlign: "left",
   },
   alarmSandra: {
-    thMinWidthClass: "min-w-[11rem]",
-    tdMinWidthClass: "min-w-[11rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-foreground`,
+    thMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdMinWidthClass: "w-[13rem] min-w-[13rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
     contentAlign: "left",
   },
   instructions: {
-    thMinWidthClass: "min-w-[16rem]",
-    tdMinWidthClass: "min-w-[16rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-foreground`,
+    thMinWidthClass: "w-[22rem] min-w-[22rem]",
+    tdMinWidthClass: "w-[22rem] min-w-[22rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
     contentAlign: "left",
   },
   specialEquipmentDetergent: {
-    thMinWidthClass: "min-w-[14rem]",
-    tdMinWidthClass: "min-w-[14rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-foreground`,
+    thMinWidthClass: "w-[16rem] min-w-[16rem]",
+    tdMinWidthClass: "w-[16rem] min-w-[16rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
     contentAlign: "left",
   },
   maxTimeHoursInclusiveOfDriving: {
-    thMinWidthClass: "min-w-[8rem]",
-    tdMinWidthClass: "min-w-[8rem]",
-    tdClass: `border-b border-r ${TD_BORDER} p-0 align-top tabular-nums text-muted-foreground`,
+    thMinWidthClass: "w-[9rem] min-w-[9rem]",
+    tdMinWidthClass: "w-[9rem] min-w-[9rem]",
+    tdClass: `border-b border-r ${TD_BORDER} p-0 tabular-nums text-muted-foreground ${TD_WRAP}`,
     contentAlign: "center",
   },
 };
 
 const CUSTOM_COLUMN_LAYOUT = {
-  thMinWidthClass: "min-w-[12rem]",
-  tdMinWidthClass: "min-w-[12rem]",
-  tdClass: `border-b border-r ${TD_BORDER} p-0 align-top text-foreground`,
+  thMinWidthClass: "w-[14rem] min-w-[14rem]",
+  tdMinWidthClass: "w-[14rem] min-w-[14rem]",
+  tdClass: `border-b border-r ${TD_BORDER} p-0 text-foreground ${TD_WRAP}`,
   contentAlign: "left" as const,
 };
 

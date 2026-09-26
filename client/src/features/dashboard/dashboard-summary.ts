@@ -1,4 +1,4 @@
-import type { TaskRecord, User } from "./types";
+import { isLeaveTransportType, type TaskRecord, type User } from "./types";
 import { getCalendarWeekNumber } from "./week-utils";
 
 export type DashboardUserSummaries = {
@@ -67,6 +67,9 @@ export function computeDashboardUserSummaries(
       continue;
     }
     if (!taskMatchesMonth(task, year, month)) {
+      continue;
+    }
+    if (isLeaveTransportType(task.transportType)) {
       continue;
     }
     const hours = shiftDurationHours(task.shift);

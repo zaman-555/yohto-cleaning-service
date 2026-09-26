@@ -1,8 +1,13 @@
 import dotenv from 'dotenv';
+import { setDefaultResultOrder } from 'node:dns';
 import path from 'path';
 
 // Explicitly load .env from the server root directory
 dotenv.config({ path: path.join(__dirname, '../.env') });
+
+// This host advertises IPv6 DNS records but has no working IPv6 route.
+// Prefer IPv4 so transactional email requests reach Resend reliably.
+setDefaultResultOrder('ipv4first');
 
 import './types/express';
 import app from './app';

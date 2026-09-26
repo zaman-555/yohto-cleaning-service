@@ -59,7 +59,7 @@ flowchart TB
 1. Open the app and **log in**.
 2. On the **Main dashboard**, find their name column and scroll to today’s date.
 3. Or open **My work** in the sidebar to see only their jobs as cards.
-4. Read the task: company, description, car, transport type, shift times, location link.
+4. Read the task: company, description, car, status, shift times, location link.
 5. On **Weekly showcase**, open the current calendar week for detailed site instructions (keys, alarm, equipment, max hours, etc.).
 
 ### Typical day for an admin
@@ -85,7 +85,7 @@ All changes are **saved to the database immediately** and visible to the team af
   - Company name
   - Task description (rich text)
   - Car / vehicle
-  - Transport type (own car, company car, bike, public transport, taxi, etc.) with colour indicators
+  - Status (Start from PCS Driving, Start from Customer, Paid Holiday, Start from PCS, Vacation, Sick leave, Unpaid off) with colour indicators
   - Location (text or clickable map link)
 - **Automatic hour summaries:**
   - Total hours per person for the month
@@ -129,7 +129,7 @@ Sidebar page at `/my-tasks`. The label and content change by role:
 
 **Each card shows:**
 - Date and shift time
-- Transport type
+- Status type
 - Company name
 - Task description
 - Car / vehicle
@@ -140,7 +140,7 @@ Sidebar page at `/my-tasks`. The label and content change by role:
 - Same **month navigation** as the main dashboard (previous / next / jump to current month)
 - Empty state if there are no assignments that month
 - Read-only for staff — editing stays on the Main dashboard (admins)
-- **My work** cards — border colour matches **transport type** (see colour legend on the page)
+- **My work** cards — border colour matches **status type** (see colour legend on the page)
 
 ### Staff KPI (admin hours chart)
 
@@ -192,7 +192,7 @@ Sidebar page at `/kpi` — **administrators only** (non-admins are redirected).
 | Admin needs all staff jobs in one place | Open **Staffs** — cards grouped by person |
 | Admin needs hours vs monthly target | Open **Staff KPI** — bar chart + adjustable working limit |
 | Staff forgot password | **Forgot password** sends a reset link to their registered email |
-| Different transport methods | Six built-in transport types with visual indicators |
+| Different assignment statuses | Seven built-in status types with visual indicators |
 | Location as text or map link | Enter plain address text or a URL; map icon only for links |
 | Work from phone | Full mobile layout; tunnel + HTTPS; no app store install |
 | Personal preference | Light / dark theme |
@@ -229,7 +229,7 @@ Sidebar page at `/kpi` — **administrators only** (non-admins are redirected).
 
 1. Main dashboard → select month.
 2. Click **+** in the cell (team member × day).
-3. Set shift time, company, task, car, transport, location.
+3. Set shift time, company, task, car, status, location.
 4. Save — the cell updates for everyone.
 
 **Edit weekly job sheet**

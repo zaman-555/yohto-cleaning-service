@@ -1,6 +1,7 @@
 import KpiClient from "@/components/kpi-client";
 import {
   fetchApprovedTeamMembers,
+  fetchLeaveDaysForYear,
   fetchTasksForMonth,
   fetchTeamMembers,
 } from "@/features/dashboard/server";
@@ -21,10 +22,11 @@ export default async function KpiPage({ searchParams }: KpiPageProps) {
   const { year, month } = resolveMonthlyPageMonth(params.year, params.month);
   const monthLabel = formatCalendarMonthLabel({ year, month });
 
-  const [teamMembers, approvedMembers, tasksForMonth] = await Promise.all([
+  const [teamMembers, approvedMembers, tasksForMonth, yearLeaveDays] = await Promise.all([
     fetchTeamMembers(),
     fetchApprovedTeamMembers(),
     fetchTasksForMonth(year, month),
+    fetchLeaveDaysForYear(year),
   ]);
 
   const users: User[] = approvedMembers
@@ -40,6 +42,7 @@ export default async function KpiPage({ searchParams }: KpiPageProps) {
       initialTeamMembers={teamMembers}
       users={users}
       initialTasks={tasksForMonth}
+      yearLeaveDays={yearLeaveDays}
     />
   );
 }

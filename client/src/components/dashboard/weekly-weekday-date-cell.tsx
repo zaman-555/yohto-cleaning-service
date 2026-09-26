@@ -76,7 +76,7 @@ export function WeeklyWeekdayDateCell({
   return (
     <div
       className={cn(
-        "group/cell relative flex min-h-[5rem] w-full flex-col items-center justify-center gap-1.5 px-10 py-3",
+        "group/cell relative flex min-h-[5rem] w-full flex-col items-center justify-center gap-1.5 px-3 py-3",
         className
       )}
     >

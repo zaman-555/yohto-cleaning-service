@@ -1,11 +1,13 @@
 import MyTasksClient from "@/components/my-tasks-client";
 import {
   fetchApprovedTeamMembers,
+  fetchScheduleMonthVisibility,
   fetchTasksForMonth,
   fetchTeamMembers,
 } from "@/features/dashboard/server";
 import {
   formatCalendarMonthLabel,
+  isFutureCalendarMonth,
   resolveMonthlyPageMonth,
 } from "@/features/dashboard/month-utils";
 import type { User } from "@/features/dashboard/types";
@@ -21,11 +23,19 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
   const { year, month } = resolveMonthlyPageMonth(params.year, params.month);
   const monthLabel = formatCalendarMonthLabel({ year, month });
 
-  const [teamMembers, approvedMembers, tasksForMonth] = await Promise.all([
-    fetchTeamMembers(),
-    fetchApprovedTeamMembers(),
-    fetchTasksForMonth(year, month),
-  ]);
+  const [teamMembers, approvedMembers, tasksForMonth, visibility] =
+    await Promise.all([
+      fetchTeamMembers(),
+      fetchApprovedTeamMembers(),
+      fetchTasksForMonth(year, month),
+      fetchScheduleMonthVisibility(year, month),
+    ]);
+  const isFuture = isFutureCalendarMonth({ year, month });
+  const monthVisibility = visibility ?? {
+    isFuture,
+    isPublished: !isFuture,
+    isVisibleToStaff: !isFuture,
+  };
 
   const users: User[] = approvedMembers
     .filter((member) => !member.isAdmin)
@@ -40,6 +50,7 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
       initialTeamMembers={teamMembers}
       users={users}
       initialTasks={tasksForMonth}
+      monthVisibility={monthVisibility}
     />
   );
 }

@@ -44,3 +44,14 @@ export function sanitizeRichTextHtml(html: string): string {
 
   return sanitized;
 }
+
+/**
+ * Make Quill HTML wrap at real word spaces in table cells.
+ * Quill often inserts &nbsp; which blocks wrapping and makes sentences look broken.
+ */
+export function normalizeRichTextForWrap(html: string): string {
+  return html
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\u00a0/g, " ")
+    .replace(/[\u2000-\u200A\u202F\u205F]/g, " ");
+}

@@ -1,5 +1,5 @@
 export { RICH_TEXT_PLACEHOLDER } from "./constants";
-export { looksLikeHtml, sanitizeRichTextHtml, stripHtmlToPlainText } from "./html";
+export { looksLikeHtml, sanitizeRichTextHtml, stripHtmlToPlainText, normalizeRichTextForWrap } from "./html";
 export { hasRichTextContent, isRichTextEmpty } from "./validation";
 export { extractRichTextLink, extractUrlFromRichText, type RichTextLink } from "./url";
 export { attachRichTextLinkClick, handleRichTextLinkClick } from "./links";

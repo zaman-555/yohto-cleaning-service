@@ -7,6 +7,16 @@ const router = Router();
 router.use(authenticate, requireApproved);
 
 router.get('/', userController.getUsers);
+router.get(
+  '/me/dashboard-staff-order',
+  requireAdmin,
+  userController.getDashboardStaffOrder
+);
+router.put(
+  '/me/dashboard-staff-order',
+  requireAdmin,
+  userController.updateDashboardStaffOrder
+);
 router.patch('/:id/approval', requireAdmin, userController.updateApproval);
 router.delete('/:id', requireAdmin, userController.deleteUser);
 

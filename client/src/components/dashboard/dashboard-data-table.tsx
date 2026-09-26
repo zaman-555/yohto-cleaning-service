@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
+import { GripVertical } from "lucide-react";
 import type { DashboardUserSummaries } from "@/features/dashboard/dashboard-summary";
 import { isCalendarToday } from "@/features/dashboard/month-utils";
 import type { DashboardRow, User } from "@/features/dashboard/types";
@@ -84,6 +86,8 @@ type DashboardDataTableProps = {
   users: User[];
   summaries: DashboardUserSummaries;
   currentUserId?: number | null;
+  canReorderUsers?: boolean;
+  onMoveUser?: (draggedUserId: number, targetUserId: number) => void;
 };
 
 export function DashboardDataTable({
@@ -91,7 +95,10 @@ export function DashboardDataTable({
   users,
   summaries,
   currentUserId = null,
+  canReorderUsers = false,
+  onMoveUser,
 }: DashboardDataTableProps) {
+  const [draggedUserId, setDraggedUserId] = useState<number | null>(null);
   const userColumns = table
     .getAllLeafColumns()
     .filter((column) => column.id.startsWith("user-"));
@@ -142,7 +149,7 @@ export function DashboardDataTable({
               <td
                 key={cell.id}
                 className={cn(
-                  "min-h-40 whitespace-normal p-0 align-top text-sm transition-colors hover:bg-accent/50",
+                  "relative min-h-40 whitespace-normal p-0 align-top text-sm transition-colors hover:bg-accent/50",
                   scrollBodyClass(id, isToday)
                 )}
               >
@@ -214,12 +221,49 @@ export function DashboardDataTable({
                 return (
                   <th
                     key={header.id}
+                    draggable={canReorderUsers}
+                    onDragStart={(event) => {
+                      if (!canReorderUsers) return;
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", String(userId));
+                      setDraggedUserId(userId);
+                    }}
+                    onDragOver={(event) => {
+                      if (!canReorderUsers || draggedUserId === null) return;
+                      event.preventDefault();
+                      event.dataTransfer.dropEffect = "move";
+                    }}
+                    onDrop={(event) => {
+                      if (!canReorderUsers) return;
+                      event.preventDefault();
+                      const sourceId =
+                        draggedUserId ?? Number(event.dataTransfer.getData("text/plain"));
+                      if (Number.isInteger(sourceId) && sourceId !== userId) {
+                        onMoveUser?.(sourceId, userId);
+                      }
+                      setDraggedUserId(null);
+                    }}
+                    onDragEnd={() => setDraggedUserId(null)}
+                    aria-grabbed={
+                      canReorderUsers && draggedUserId === userId ? true : undefined
+                    }
+                    title={canReorderUsers ? "Drag to move this staff column" : undefined}
                     className={cn(
                       "h-10 whitespace-nowrap px-6 py-4 align-middle text-sm font-semibold text-foreground",
-                      scrollHeaderClass(isSelf)
+                      scrollHeaderClass(isSelf),
+                      canReorderUsers && "cursor-grab select-none active:cursor-grabbing",
+                      draggedUserId === userId && "opacity-60"
                     )}
                   >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    <span className="inline-flex items-center justify-center gap-1">
+                      {canReorderUsers ? (
+                        <GripVertical
+                          className="size-4 shrink-0 text-muted-foreground"
+                          aria-hidden
+                        />
+                      ) : null}
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </span>
                   </th>
                 );
               })}

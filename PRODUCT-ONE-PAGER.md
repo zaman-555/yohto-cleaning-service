@@ -13,7 +13,7 @@ Spreadsheets, WhatsApp messages, and paper rosters break down when your team gro
 
 **Extra Team Dashboard** is a secure web app that gives your team:
 
-- A **monthly schedule grid** — every person × every day, with shift times, company, task, car, transport, and location.
+- A **monthly schedule grid** — every person × every day, with shift times, company, task, car, status, and location.
 - A **weekly job showcase** — detailed site instructions (keys, alarm, equipment, max hours) with columns you can customize.
 - **Automatic hour summaries** — monthly totals, weekly averages, and daily team hours.
 
@@ -28,7 +28,7 @@ No app store install. Works on phone, tablet, and desktop.
 | **View** | Month calendar | Week-by-week detail |
 | **Who edits** | Admins | Admins |
 | **Who views** | Whole team | Whole team |
-| **Highlights** | Hour summaries, transport icons, sticky mobile columns | Custom columns, rich text, multiple rows per week |
+| **Highlights** | Hour summaries, status icons, sticky mobile columns | Custom columns, rich text, multiple rows per week |
 
 **Also included:** self-registration + admin approval · password reset by email · light/dark mode · role-based access · secure HTTPS via Cloudflare Tunnel · your data on **your server**
 

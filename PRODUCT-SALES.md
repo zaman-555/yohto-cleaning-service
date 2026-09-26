@@ -39,7 +39,7 @@ Built from a production deployment for **Extra Team**. Ready to deploy for your 
 
 - Full month view: **days × team members**
 - Per assignment: shift time, company, task (rich text), car, transport type, location
-- Colour-coded transport indicators (own car, company car, bike, public transport, taxi, etc.)
+- Colour-coded status indicators (Start from PCS Driving, Start from Customer, Paid Holiday, Vacation, Sick leave, etc.)
 - **Hour summaries:** monthly total and weekly average per person; daily team total
 - Mobile-friendly with sticky date columns
 - Personal column highlight so each user finds their schedule quickly

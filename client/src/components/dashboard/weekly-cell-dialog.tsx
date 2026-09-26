@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditorLazy } from "@/components/ui/rich-text-editor-lazy";
 import type { User } from "@/features/dashboard/types";
+import {
+  combineInstructionsContent,
+  splitInstructionsContent,
+} from "@/features/dashboard/weekly-instructions";
 import {
   getUserLastName,
   userPickerLabelFromIds,
@@ -28,7 +33,7 @@ import {
   WEEKDAY_THEME,
 } from "./weekly-weekday-picker";
 
-export type WeeklyCellDialogInputVariant = "text" | "weekday";
+export type WeeklyCellDialogInputVariant = "text" | "weekday" | "instructions";
 
 type WeeklyCellDialogProps = {
   open: boolean;
@@ -62,6 +67,16 @@ export function WeeklyCellDialog({
   onSubmit,
 }: WeeklyCellDialogProps) {
   const isWeekday = inputVariant === "weekday";
+  const isInstructions = inputVariant === "instructions";
+  const [instructionsBody, setInstructionsBody] = useState("");
+  const [driveUrl, setDriveUrl] = useState("");
+
+  useEffect(() => {
+    if (!open || !isInstructions) return;
+    const split = splitInstructionsContent(textValue);
+    setInstructionsBody(split.bodyHtml);
+    setDriveUrl(split.driveUrl);
+  }, [open, isInstructions, textValue]);
 
   const toggleUserId = (userId: number) => {
     if (!onSelectedUserIdsChange) return;
@@ -70,6 +85,12 @@ export function WeeklyCellDialog({
       return;
     }
     onSelectedUserIdsChange([...selectedUserIds, userId]);
+  };
+
+  const syncInstructions = (body: string, drive: string) => {
+    setInstructionsBody(body);
+    setDriveUrl(drive);
+    onTextChange(combineInstructionsContent(body, drive));
   };
 
   return (
@@ -143,7 +164,9 @@ export function WeeklyCellDialog({
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {users.length === 0 ? (
-                      <p className="px-2 py-1.5 text-sm text-muted-foreground">No users available.</p>
+                      <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                        No users available.
+                      </p>
                     ) : (
                       users.map((user) => (
                         <DropdownMenuCheckboxItem
@@ -160,6 +183,45 @@ export function WeeklyCellDialog({
                 </DropdownMenu>
                 <p className="text-xs text-muted-foreground">
                   Optional. Last names are saved in the Weekday / date column with the chosen day.
+                </p>
+              </div>
+            </>
+          ) : isInstructions ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="weekly-instructions-text">Information</Label>
+                {open ? (
+                  <RichTextEditorLazy
+                    id="weekly-instructions-text"
+                    value={instructionsBody}
+                    onChange={(body) => syncInstructions(body, driveUrl)}
+                    placeholder="Write site instructions, notes, and details…"
+                    disabled={isSubmitting}
+                  />
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  Add the information text staff need for this job.
+                </p>
+              </div>
+              <div className="space-y-2 border-t border-border pt-4">
+                <Label htmlFor="weekly-instructions-drive">
+                  Google Drive document (share link)
+                </Label>
+                <Input
+                  id="weekly-instructions-drive"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://drive.google.com/…"
+                  value={driveUrl}
+                  disabled={isSubmitting}
+                  onChange={(event) =>
+                    syncInstructions(instructionsBody, event.target.value)
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Paste a shared Google Drive / Docs link. It appears under the text. Opens in
+                  this tab — use the browser <span className="font-medium">Back</span> button to
+                  return to Extra Team.
                 </p>
               </div>
             </>

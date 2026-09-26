@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import { KPI_LEAVE_DAY_TYPES } from '../constants/task';
 
 const taskListSelect = {
   id: true,
@@ -29,6 +30,40 @@ export async function findTasksInMonth(year: number, month: number) {
     },
     orderBy: { date: 'desc' },
     select: taskListSelect,
+  });
+}
+
+export async function findTasksInYear(year: number) {
+  const rangeStart = new Date(Date.UTC(year, 0, 1));
+  const rangeEnd = new Date(Date.UTC(year + 1, 0, 1));
+  return prisma.task.findMany({
+    where: {
+      date: {
+        gte: rangeStart,
+        lt: rangeEnd,
+      },
+    },
+    orderBy: { date: 'desc' },
+    select: taskListSelect,
+  });
+}
+
+export async function findLeaveDaysInYear(year: number) {
+  const rangeStart = new Date(Date.UTC(year, 0, 1));
+  const rangeEnd = new Date(Date.UTC(year + 1, 0, 1));
+  return prisma.task.findMany({
+    where: {
+      date: {
+        gte: rangeStart,
+        lt: rangeEnd,
+      },
+      transportType: { in: [...KPI_LEAVE_DAY_TYPES] },
+    },
+    select: {
+      userId: true,
+      date: true,
+      transportType: true,
+    },
   });
 }
 

@@ -20,6 +20,12 @@ import { Input } from "@/components/ui/input";
 import {
   computeDashboardUserSummaries,
 } from "@/features/dashboard/dashboard-summary";
+import {
+  countLeaveDaysByUser,
+  emptyLeaveDayCount,
+  leaveDayTotal,
+  type LeaveDayRecord,
+} from "@/features/dashboard/leave-days";
 import type { TaskRecord, TeamMember, User } from "@/features/dashboard/types";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +68,7 @@ export type KpiClientProps = {
   initialTeamMembers: TeamMember[];
   users: User[];
   initialTasks: TaskRecord[];
+  yearLeaveDays: LeaveDayRecord[];
 };
 
 type ChartRow = {
@@ -140,6 +147,7 @@ export default function KpiClient({
   initialTeamMembers,
   users,
   initialTasks,
+  yearLeaveDays,
 }: KpiClientProps) {
   const router = useRouter();
   const {
@@ -176,6 +184,36 @@ export default function KpiClient({
       router.replace("/");
     }
   }, [loading, user, router]);
+
+  const leaveByUser = useMemo(
+    () => countLeaveDaysByUser(yearLeaveDays),
+    [yearLeaveDays]
+  );
+
+  const leaveRows = useMemo(() => {
+    return users.map((teamUser) => {
+      const counts = leaveByUser.get(teamUser.id) ?? emptyLeaveDayCount();
+      const displayName = toTitleCaseName(teamUser.name);
+      return {
+        userId: teamUser.id,
+        name: displayName,
+        ...counts,
+        total: leaveDayTotal(counts),
+      };
+    });
+  }, [leaveByUser, users]);
+
+  const leaveTotals = useMemo(() => {
+    return leaveRows.reduce(
+      (sum, row) => ({
+        paidHoliday: sum.paidHoliday + row.paidHoliday,
+        sickLeave: sum.sickLeave + row.sickLeave,
+        vacation: sum.vacation + row.vacation,
+        total: sum.total + row.total,
+      }),
+      { paidHoliday: 0, sickLeave: 0, vacation: 0, total: 0 }
+    );
+  }, [leaveRows]);
 
   const summaries = useMemo(
     () => computeDashboardUserSummaries(initialTasks, users, year, monthNumber),
@@ -548,6 +586,86 @@ export default function KpiClient({
             Progress: green &lt; half of limit · yellow ≥ half · red ≥{" "}
             {formatKpiHours(workingLimit)} h (working limit)
           </p>
+        </div>
+      ) : null}
+
+      {leaveRows.length > 0 ? (
+        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-4 py-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              Leave days in {year}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Paid Holiday, Sick leave, and Vacation assigned on the monthly plan.
+              Each calendar day counts once.
+            </p>
+          </div>
+          <table className="w-full min-w-[36rem] text-sm">
+            <thead className="border-b border-border bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-4 py-2.5 text-left font-medium">Staff</th>
+                <th className="px-4 py-2.5 text-right font-medium">
+                  <span className="inline-flex items-center justify-end gap-1.5">
+                    <span className="size-2 rounded-full bg-sky-500" aria-hidden />
+                    Paid Holiday
+                  </span>
+                </th>
+                <th className="px-4 py-2.5 text-right font-medium">
+                  <span className="inline-flex items-center justify-end gap-1.5">
+                    <span className="size-2 rounded-full bg-amber-500" aria-hidden />
+                    Sick leave
+                  </span>
+                </th>
+                <th className="px-4 py-2.5 text-right font-medium">
+                  <span className="inline-flex items-center justify-end gap-1.5">
+                    <span className="size-2 rounded-full bg-rose-500" aria-hidden />
+                    Vacation
+                  </span>
+                </th>
+                <th className="px-4 py-2.5 text-right font-medium">Total days</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leaveRows.map((row) => (
+                <tr key={row.userId} className="border-b border-border last:border-0">
+                  <td className="px-4 py-2.5 text-left font-medium text-foreground">
+                    {row.name}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-foreground">
+                    {row.paidHoliday}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-foreground">
+                    {row.sickLeave}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-foreground">
+                    {row.vacation}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums font-medium text-foreground">
+                    {row.total}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="border-t border-border bg-muted/40 text-foreground">
+              <tr>
+                <td className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">
+                  All staff
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums font-semibold">
+                  {leaveTotals.paidHoliday}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums font-semibold">
+                  {leaveTotals.sickLeave}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums font-semibold">
+                  {leaveTotals.vacation}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums font-semibold">
+                  {leaveTotals.total}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       ) : null}
     </DashboardShell>

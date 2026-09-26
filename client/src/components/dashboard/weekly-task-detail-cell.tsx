@@ -2,6 +2,10 @@ import { CirclePlus, FileText, Pencil } from "lucide-react";
 import { RichTextContent } from "@/components/ui/rich-text-content";
 import { cn } from "@/lib/utils";
 import { extractRichTextLink, hasRichTextContent } from "@/lib/rich-text";
+import {
+  extractGoogleDriveLink,
+  stripGoogleDriveLinks,
+} from "@/features/dashboard/weekly-instructions";
 import type { TaskDetail } from "@/features/dashboard/weekly-showcase-types";
 import { WeeklyWeekdayDateCell } from "./weekly-weekday-date-cell";
 
@@ -11,10 +15,18 @@ type WeeklyTaskDetailCellProps = {
   canEdit?: boolean;
   /** When false (e.g. the weekday column), links are never rendered as a file chip. */
   enableLink?: boolean;
+  /** Instructions: show info text plus Drive link chip at the bottom. */
+  isInstructions?: boolean;
   isWeekdayDate?: boolean;
   contentAlign?: "left" | "center";
   onOpenEdit: () => void;
 };
+
+/** Wrap at word spaces for every text column (no mid-word breaks). */
+const CELL_TEXT_WRAP = cn(
+  "w-full text-sm leading-relaxed text-foreground whitespace-normal",
+  "[overflow-wrap:break-word] [word-break:normal]"
+);
 
 function cellHasData(detail: TaskDetail): boolean {
   return hasRichTextContent(detail.text);
@@ -25,6 +37,7 @@ export function WeeklyTaskDetailCell({
   className,
   canEdit = true,
   enableLink = true,
+  isInstructions = false,
   isWeekdayDate = false,
   contentAlign = "left",
   onOpenEdit,
@@ -41,7 +54,14 @@ export function WeeklyTaskDetailCell({
   }
 
   const hasData = cellHasData(detail);
-  const link = enableLink && hasData ? extractRichTextLink(detail.text) : null;
+  const driveHref = isInstructions ? extractGoogleDriveLink(detail.text) : null;
+  const instructionsBody = isInstructions
+    ? stripGoogleDriveLinks(detail.text)
+    : detail.text;
+  const link =
+    !isInstructions && enableLink && hasData
+      ? extractRichTextLink(detail.text)
+      : null;
 
   if (!hasData) {
     if (!canEdit) {
@@ -54,10 +74,10 @@ export function WeeklyTaskDetailCell({
         >
           <div
             className={cn(
-              "absolute inset-0 flex items-center p-3 text-muted-foreground",
+              "absolute inset-0 flex items-center py-3 text-muted-foreground",
               contentAlign === "center"
-                ? "justify-center text-center"
-                : "justify-start text-left"
+                ? "justify-center px-3 text-center"
+                : "justify-start pl-3 pr-10 text-left"
             )}
           >
             —
@@ -97,12 +117,50 @@ export function WeeklyTaskDetailCell({
   return (
     <div
       className={cn(
-        "group/cell relative min-h-[5rem] w-full px-10 py-3",
-        contentAlign === "center" ? "text-center" : "text-left",
+        "group/cell relative min-h-[5rem] w-full py-3",
+        contentAlign === "center" ? "px-3 text-center" : "pl-3 pr-10 text-left",
         className
       )}
     >
-      {link ? (
+      {isInstructions ? (
+        <div
+          className={cn(
+            "flex w-full flex-col gap-2.5",
+            contentAlign === "center" ? "items-center" : "items-start"
+          )}
+        >
+          {hasRichTextContent(instructionsBody) ? (
+            <RichTextContent
+              html={instructionsBody}
+              wrapAtWords
+              className={cn(
+                CELL_TEXT_WRAP,
+                "[&_.ql-align-center]:text-left [&_.ql-align-right]:text-left [&_.ql-align-justify]:text-left",
+                contentAlign === "center" ? "text-center" : "text-left"
+              )}
+            />
+          ) : null}
+          {driveHref ? (
+            <a
+              href={driveHref}
+              title="Open Google Drive document (use browser Back to return)"
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-muted px-2.5 py-1.5",
+                "transition-colors hover:border-sky-400 hover:bg-accent",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80"
+              )}
+            >
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-sky-600 text-white">
+                <FileText className="size-3" strokeWidth={2} aria-hidden />
+              </span>
+              <span className="truncate text-xs font-medium text-foreground">
+                Google Drive document
+              </span>
+            </a>
+          ) : null}
+        </div>
+      ) : link ? (
         <a
           href={link.href}
           target="_blank"
@@ -126,9 +184,12 @@ export function WeeklyTaskDetailCell({
       ) : (
         <RichTextContent
           html={detail.text}
+          wrapAtWords
           className={cn(
-            "w-full text-sm leading-relaxed text-foreground",
-            contentAlign === "center" ? "text-center" : "text-left"
+            CELL_TEXT_WRAP,
+            contentAlign === "center"
+              ? "text-center"
+              : "text-left [&_.ql-align-center]:text-left [&_.ql-align-right]:text-left [&_.ql-align-justify]:text-left"
           )}
         />
       )}

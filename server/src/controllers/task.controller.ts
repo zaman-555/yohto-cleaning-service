@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
-import { isValidTransportType } from '../constants/task';
+import { isLeaveTransportType, isValidTransportType } from '../constants/task';
 import { isValidTaskShift, normalizeTaskShift } from '../constants/task-shift';
 import * as taskModel from '../models/task.model';
+import * as monthVisibilityModel from '../models/schedule-month-visibility.model';
 import * as userModel from '../models/user.model';
 import { isLocationFieldEmpty } from '../utils/location-url';
 
@@ -31,6 +32,49 @@ function parseDateOnly(value: string): Date | null {
   return parsed;
 }
 
+export async function getLeaveDays(req: Request, res: Response): Promise<void> {
+  const year = Number(req.query.year);
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    res.status(400).json({ error: 'Valid year is required' });
+    return;
+  }
+
+  try {
+    const tasks = await taskModel.findLeaveDaysInYear(year);
+    res.json(
+      tasks.map((task) => ({
+        userId: task.userId,
+        date: formatDateOnly(task.date),
+        transportType: task.transportType,
+      })),
+    );
+  } catch (error) {
+    console.error('Error fetching leave days:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function getTasksForYear(req: Request, res: Response): Promise<void> {
+  const year = Number(req.query.year);
+  if (!Number.isInteger(year) || year < 1970 || year > 2100) {
+    res.status(400).json({ error: 'Valid year is required' });
+    return;
+  }
+
+  try {
+    const tasks = await taskModel.findTasksInYear(year);
+    res.json(
+      tasks.map((task) => ({
+        ...task,
+        date: formatDateOnly(task.date),
+      })),
+    );
+  } catch (error) {
+    console.error('Error fetching tasks for year:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 export async function getTasks(req: Request, res: Response): Promise<void> {
   const year = Number(req.query.year);
   const month = Number(req.query.month);
@@ -41,6 +85,14 @@ export async function getTasks(req: Request, res: Response): Promise<void> {
   }
 
   try {
+    if (!req.authUser?.isAdmin) {
+      const publication = await monthVisibilityModel.getMonthPublication(year, month);
+      if (!publication.isVisibleToStaff) {
+        res.status(403).json({ error: 'This schedule has not been published to staff yet' });
+        return;
+      }
+    }
+
     const tasks = await taskModel.findTasksInMonth(year, month);
     res.json(
       tasks.map((task) => ({
@@ -69,21 +121,46 @@ function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
   const { date, shift, userId, companyName, task, carName, transportType, location } = body;
 
   const userIdNum = userId !== undefined && userId !== null ? Number(userId) : NaN;
-  if (
-    !date ||
-    !shift ||
-    (requireUserId && !Number.isFinite(userIdNum)) ||
-    !companyName ||
-    !task ||
-    !carName ||
-    !transportType ||
-    !location
-  ) {
+  if (!date || !transportType || (requireUserId && !Number.isFinite(userIdNum))) {
     return { error: 'All task fields are required' as const };
   }
 
   if (!isValidTransportType(transportType)) {
-    return { error: 'Invalid transport type' as const };
+    return { error: 'Invalid status type' as const };
+  }
+
+  const parsedDate = parseDateOnly(date);
+  if (!parsedDate) {
+    return { error: 'Date must be a valid calendar date (YYYY-MM-DD)' as const };
+  }
+
+  if (isLeaveTransportType(transportType)) {
+    const taskText = task?.trim() ?? '';
+    if (!taskText) {
+      return { error: 'Task is required' as const };
+    }
+
+    const shiftValue = shift?.trim() ?? '';
+    if (shiftValue && !isValidTaskShift(shiftValue)) {
+      return { error: 'Shift must be a valid time range (HH:mm-HH:mm)' as const };
+    }
+
+    return {
+      parsed: {
+        parsedDate,
+        shift: shiftValue ? normalizeTaskShift(shiftValue) : '',
+        userId: requireUserId ? userIdNum : undefined,
+        companyName: companyName?.trim() ?? '',
+        task: taskText,
+        carName: carName?.trim() ?? '',
+        transportType,
+        location: location?.trim() ?? '',
+      },
+    };
+  }
+
+  if (!shift || !companyName || !task || !carName || !location) {
+    return { error: 'All task fields are required' as const };
   }
 
   if (!isValidTaskShift(shift)) {
@@ -93,11 +170,6 @@ function parseTaskPayload(body: TaskBody, requireUserId: boolean) {
   const locationTrimmed = location.trim();
   if (isLocationFieldEmpty(locationTrimmed)) {
     return { error: 'All task fields are required' as const };
-  }
-
-  const parsedDate = parseDateOnly(date);
-  if (!parsedDate) {
-    return { error: 'Date must be a valid calendar date (YYYY-MM-DD)' as const };
   }
 
   return {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { EyeOff } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { MonthlyMonthPagination } from "@/components/dashboard/monthly-month-pagination";
 import { MyTaskCard } from "@/components/dashboard/my-task-card";
@@ -9,7 +10,12 @@ import {
   TRANSPORT_TYPE_META,
 } from "@/components/dashboard/transport-constants";
 import { useDashboardShell } from "@/components/dashboard/use-dashboard-shell";
-import type { TaskRecord, TeamMember, User } from "@/features/dashboard/types";
+import type {
+  ScheduleMonthVisibility,
+  TaskRecord,
+  TeamMember,
+  User,
+} from "@/features/dashboard/types";
 import { cn } from "@/lib/utils";
 
 export type MyTasksClientProps = {
@@ -19,6 +25,7 @@ export type MyTasksClientProps = {
   initialTeamMembers: TeamMember[];
   users: User[];
   initialTasks: TaskRecord[];
+  monthVisibility: ScheduleMonthVisibility;
 };
 
 type UserTaskGroup = {
@@ -74,6 +81,7 @@ export default function MyTasksClient({
   initialTeamMembers,
   users,
   initialTasks,
+  monthVisibility,
 }: MyTasksClientProps) {
   const {
     user,
@@ -178,9 +186,22 @@ export default function MyTasksClient({
         basePath="/my-tasks"
       />
 
+      {!isAdmin && !monthVisibility.isVisibleToStaff ? (
+        <div className="rounded-xl border border-border bg-muted/40 px-5 py-10 text-center">
+          <EyeOff className="mx-auto size-6 text-muted-foreground" aria-hidden />
+          <p className="mt-3 text-sm font-semibold text-foreground">
+            Schedule not published yet
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            An administrator is still preparing {monthLabel}. Your tasks will
+            appear here after the schedule is published.
+          </p>
+        </div>
+      ) : (
+        <>
       {!isAdmin && visibleTasks.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">Border colour = transport</span>
+        <div className="hidden flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground md:flex">
+          <span className="font-medium text-foreground">Border colour = status</span>
           {TRANSPORT_TYPES.map((type) => {
             const meta = TRANSPORT_TYPE_META[type];
             return (
@@ -236,6 +257,8 @@ export default function MyTasksClient({
             <MyTaskCard key={task.id} task={task} variant="staff" />
           ))}
         </div>
+      )}
+        </>
       )}
     </DashboardShell>
   );
